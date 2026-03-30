@@ -44,7 +44,11 @@ export default function SiteEditor() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await updateSiteMetadata(metadata);
+      // Filter out undefined values to match Record<string, string> type
+      const cleanMetadata: Record<string, string> = Object.fromEntries(
+        Object.entries(metadata).filter((entry): entry is [string, string] => entry[1] !== undefined)
+      );
+      await updateSiteMetadata(cleanMetadata);
       alert("Changes saved successfully!");
     } catch (error) {
       console.error("Error saving metadata:", error);

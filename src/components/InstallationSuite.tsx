@@ -49,8 +49,9 @@ export default function InstallationSuite() {
     window.open(`https://wa.me/${whatsapp}?text=Hi, I'm interested in the ${name}.`, "_blank");
   };
 
-  const handleBuyNow = () => {
-    // Add cart logic here
+  const handleBuyNow = (id: string) => {
+    // Navigate to checkout with product id
+    window.location.href = `/checkout?product=${id}`;
   };
 
   return (
