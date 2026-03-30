@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   description: "The ultimate destination for luxury Frontals, Ponytails, Weaves, and professional hair services.",
 };
 
+// Force all pages to render dynamically so Supabase env vars are available at runtime
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({
   children,
 }: Readonly<{
