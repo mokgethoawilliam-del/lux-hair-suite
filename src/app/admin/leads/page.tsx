@@ -1,42 +1,34 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Radio, MessageSquare, ExternalLink, Filter, Search, MoreVertical } from "lucide-react";
-
-const mockLeads = [
-  {
-    id: 1,
-    name: "Lerato M.",
-    platform: "X (Twitter)",
-    snippet: "Looking for a hair plug in Polokwane. Need a high-quality frontal for my graduation next week!",
-    intent: "High Intent - Buying",
-    score: 0.95,
-    timestamp: "2 mins ago",
-  },
-  {
-    id: 2,
-    name: "Thandi K.",
-    platform: "Instagram",
-    snippet: "Do you guys do installations for ponytails or just weaves?",
-    intent: "Inquiry - Service",
-    score: 0.72,
-    timestamp: "45 mins ago",
-  },
-  {
-    id: 3,
-    name: "Anonymous",
-    platform: "Web Search",
-    snippet: "HD Frontal price list 2026 South Africa",
-    intent: "Price Sensitivity",
-    score: 0.45,
-    timestamp: "2 hours ago",
-  },
-];
+import { fetchLeads } from "@/lib/supabase";
 
 export default function LeadRadar() {
-  const handleQuickReply = (name: string) => {
+  const [leads, setLeads] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadLeads = async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchLeads();
+      setLeads(data);
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLeads();
+  }, []);
+
+  const handleQuickReply = (name: string, number?: string) => {
+    const targetNumber = number || "27123456789";
     const message = encodeURIComponent(`Hi ${name}, I saw your inquiry about the hair. How can I help you today?`);
-    window.open(`https://wa.me/27123456789?text=${message}`, "_blank");
+    window.open(`https://wa.me/${targetNumber}?text=${message}`, "_blank");
   };
 
   return (
@@ -55,10 +47,12 @@ export default function LeadRadar() {
           <motion.button 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-6 py-2 bg-brand-gold text-brand-obsidian font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-brand-gold/10"
+            onClick={loadLeads}
+            disabled={isLoading}
+            className="px-6 py-2 bg-brand-gold text-brand-obsidian font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-brand-gold/10 disabled:opacity-50"
           >
-            <Radio className="w-4 h-4 animate-pulse" />
-            Refresh Radar
+            <Radio className={`w-4 h-4 ${isLoading ? "animate-spin" : "animate-pulse"}`} />
+            {isLoading ? "Refreshing..." : "Refresh Radar"}
           </motion.button>
         </div>
       </div>
@@ -81,7 +75,12 @@ export default function LeadRadar() {
 
       {/* Radar Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {mockLeads.map((lead, idx) => (
+        {leads.length === 0 && !isLoading && (
+          <div className="col-span-full py-20 text-center bg-white/5 rounded-[32px] border border-dashed border-white/10">
+             <p className="text-white/30 uppercase tracking-widest text-sm">No leads captured yet.</p>
+          </div>
+        )}
+        {leads.map((lead: any, idx: number) => (
           <motion.div
             key={lead.id}
             initial={{ opacity: 0, scale: 0.95 }}
@@ -93,7 +92,7 @@ export default function LeadRadar() {
             <div className="flex items-center justify-between mb-8">
                <div className="px-4 py-1.5 bg-brand-obsidian border border-white/10 rounded-full flex items-center gap-2">
                  <div className="w-2 h-2 rounded-full bg-brand-gold animate-ping" />
-                 <span className="text-[10px] uppercase tracking-widest font-bold">{lead.platform}</span>
+                  <span className="text-[10px] uppercase tracking-widest font-bold">{lead.source || "Web"}</span>
                </div>
                <button className="text-white/20 hover:text-white transition-colors">
                  <MoreVertical className="w-5 h-5" />
@@ -102,28 +101,28 @@ export default function LeadRadar() {
 
             <div className="mb-6">
               <div className="flex items-end justify-between mb-4">
-                <h3 className="text-2xl font-serif">{lead.name === "Anonymous" ? "Direct Lead" : lead.name}</h3>
-                <span className="text-[10px] text-white/30 uppercase font-bold">{lead.timestamp}</span>
+                <h3 className="text-2xl font-serif">{lead.name || "Anonymous Lead"}</h3>
+                <span className="text-[10px] text-white/30 uppercase font-bold">{new Date(lead.timestamp).toLocaleDateString()}</span>
               </div>
               <p className="text-white/50 leading-relaxed italic border-l-2 border-brand-gold/30 pl-4 py-2 mb-6">
-                "{lead.snippet}"
+                "{lead.snippet || `New inquiry from ${lead.name || 'customer'} regarding services.`}"
               </p>
               
               <div className="flex items-center justify-between p-4 bg-brand-emerald/5 rounded-2xl border border-brand-emerald/10">
                 <div className="flex flex-col">
-                  <span className="text-[9px] uppercase tracking-widest text-white/30 mb-1 font-bold">Intent Analysis</span>
-                  <span className="text-xs font-bold text-brand-gold">{lead.intent}</span>
+                  <span className="text-[9px] uppercase tracking-widest text-white/30 mb-1 font-bold">Status</span>
+                  <span className="text-xs font-bold text-brand-gold">{lead.status}</span>
                 </div>
                 <div className="text-right">
-                   <span className="text-[9px] uppercase tracking-widest text-white/30 mb-1 block font-bold">Match Score</span>
-                   <span className="text-sm font-bold">{Math.round(lead.score * 100)}%</span>
+                   <span className="text-[9px] uppercase tracking-widest text-white/30 mb-1 block font-bold">Contact</span>
+                   <span className="text-sm font-bold">{lead.whatsapp_number}</span>
                 </div>
               </div>
             </div>
 
             <div className="flex gap-4">
               <button 
-                onClick={() => handleQuickReply(lead.name)}
+                onClick={() => handleQuickReply(lead.name, lead.whatsapp_number)}
                 className="flex-1 py-4 bg-brand-gold text-brand-obsidian font-bold rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] transition-all shadow-lg shadow-brand-gold/10"
               >
                 <MessageSquare className="w-4 h-4" />

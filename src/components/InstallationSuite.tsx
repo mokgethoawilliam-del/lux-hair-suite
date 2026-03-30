@@ -1,30 +1,57 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Scissors, Sparkle, Calendar } from "lucide-react";
-
-const services = [
-  {
-    name: "Full Sew-in",
-    price: "R1,500",
-    duration: "3-4 Hours",
-    icon: <Scissors className="w-5 h-5 text-brand-gold" />,
-  },
-  {
-    name: "Frontal Install",
-    price: "R1,200",
-    duration: "2-3 Hours",
-    icon: <Sparkle className="w-5 h-5 text-brand-gold" />,
-  },
-  {
-    name: "Wig Refresh",
-    price: "R650",
-    duration: "1.5 Hours",
-    icon: <Calendar className="w-5 h-5 text-brand-gold" />,
-  },
-];
+import { Scissors, Sparkle, Calendar, Loader2, MessageCircle, ShoppingCart } from "lucide-react";
+import { getSiteMetadata, supabase } from "@/lib/supabase";
 
 export default function InstallationSuite() {
+  const [services, setServices] = useState<any[]>([]);
+  const [whatsapp, setWhatsapp] = useState("27123456789");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        // 1. Fetch Services
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .eq("category", "Service")
+          .eq("is_in_stock", true);
+        
+        if (error) throw error;
+        setServices(data || []);
+
+        // 2. Fetch WhatsApp
+        const metadata = await getSiteMetadata();
+        if (metadata.whatsapp_number) setWhatsapp(metadata.whatsapp_number);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const getIcon = (idx: number) => {
+    const icons = [
+      <Scissors key="s" className="w-5 h-5 text-brand-gold" />,
+      <Sparkle key="sp" className="w-5 h-5 text-brand-gold" />,
+      <Calendar key="c" className="w-5 h-5 text-brand-gold" />,
+    ];
+    return icons[idx % icons.length];
+  };
+
+  const handleWhatsAppInquiry = (name: string) => {
+    window.open(`https://wa.me/${whatsapp}?text=Hi, I'm interested in the ${name}.`, "_blank");
+  };
+
+  const handleBuyNow = (id: string) => {
+    // Add cart logic here
+  };
+
   return (
     <section id="installations" className="py-24 bg-brand-emerald/10 border-y border-white/5">
       <div className="container mx-auto px-6">
@@ -38,29 +65,66 @@ export default function InstallationSuite() {
               Our salon specialists ensure every install is seamless, long-lasting, and tailored to your natural hairline. From full sew-ins to bespoke frontal applications.
             </p>
             
-            <div className="space-y-6 max-w-md">
-              {services.map((service, idx) => (
-                <motion.div 
-                  key={service.name}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5 hover:border-brand-gold/20 transition-all group"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-brand-emerald/20 rounded-xl group-hover:bg-brand-gold/20 transition-all">
-                      {service.icon}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {isLoading ? (
+                <div className="col-span-full py-20 text-center">
+                   <Loader2 className="w-8 h-8 animate-spin text-brand-gold mx-auto" />
+                   <p className="mt-4 text-white/20 uppercase tracking-widest text-xs">Curating Collection...</p>
+                </div>
+              ) : services.length === 0 ? (
+                <div className="col-span-full py-20 text-center border border-dashed border-white/10 rounded-[32px]">
+                   <p className="text-white/20 uppercase tracking-widest text-xs">No products in vault yet.</p>
+                </div>
+              ) : (
+                services.map((cat, idx) => (
+                  <motion.div
+                    key={cat.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="group relative bg-brand-emerald/5 border border-white/5 rounded-2xl overflow-hidden hover:border-brand-gold/30 transition-all"
+                  >
+                    {/* Image Aspect Ratio Box */}
+                    <div className="relative aspect-[4/5] overflow-hidden">
+                      <div className="absolute inset-0 bg-brand-emerald/20 group-hover:bg-transparent transition-all duration-500 z-10" />
+                      <img 
+                        src={cat.image_url} 
+                        alt={cat.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                      />
                     </div>
-                    <div>
-                      <h4 className="font-serif text-lg">{service.name}</h4>
-                      <span className="text-xs text-white/30 truncate">{service.duration}</span>
+
+                    {/* Content */}
+                    <div className="p-8 relative z-20">
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-brand-gold mb-2 block font-semibold">
+                        R {cat.price}
+                      </span>
+                      <h3 className="text-2xl font-serif mb-2 text-white">
+                        {cat.name}
+                      </h3>
+                      <p className="text-white/40 text-sm mb-6 leading-relaxed line-clamp-2">
+                        {cat.description}
+                      </p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <button 
+                          onClick={() => handleWhatsAppInquiry(cat.name)}
+                          className="py-3 bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center gap-2 rounded-full transition-all duration-300 font-medium text-xs"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          Inquiry
+                        </button>
+                        <button 
+                          onClick={() => handleBuyNow(cat.id)}
+                          className="py-3 bg-brand-gold text-brand-obsidian flex items-center justify-center gap-2 rounded-full transition-all duration-300 font-bold text-xs shadow-lg shadow-brand-gold/10"
+                        >
+                          <ShoppingCart className="w-4 h-4" />
+                          Buy Now
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-bold text-brand-gold">{service.price}</span>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))
+              )}
             </div>
             
             <button className="mt-10 px-10 py-4 bg-brand-gold text-brand-obsidian font-bold rounded-full hover:scale-105 transition-transform">

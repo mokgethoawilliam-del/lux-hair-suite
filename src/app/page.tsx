@@ -1,11 +1,34 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import CategoryGrid from "@/components/CategoryGrid";
 import InstallationSuite from "@/components/InstallationSuite";
 import AffiliateSection from "@/components/AffiliateSection";
 import LeadMagnet from "@/components/LeadMagnet";
+import { fetchGalleryImages } from "@/lib/supabase";
 
 export default function Home() {
+  const [galleryImages, setGalleryImages] = useState<any[]>([]);
+  const [brandName, setBrandName] = useState("LUX HAIR");
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const { getSiteMetadata } = await import("@/lib/supabase");
+        const meta = await getSiteMetadata();
+        if (meta.brand_name) setBrandName(meta.brand_name);
+        
+        const data = await fetchGalleryImages();
+        setGalleryImages(data);
+      } catch (error) {
+        console.error("Error loading home data:", error);
+      }
+    }
+    load();
+  }, []);
+
   return (
     <main className="min-h-screen bg-brand-obsidian text-white selection:bg-brand-gold selection:text-brand-obsidian">
       <Navbar />
@@ -21,7 +44,7 @@ export default function Home() {
           <CategoryGrid />
           <InstallationSuite />
           
-          {/* Gallery Placeholder - Soon to be Dynamic */}
+          {/* Gallery Section */}
           <section id="gallery" className="py-24 bg-brand-obsidian overflow-hidden">
             <div className="container mx-auto px-6">
               <div className="text-center mb-16">
@@ -29,17 +52,23 @@ export default function Home() {
                 <div className="w-16 h-px bg-brand-gold/50 mx-auto" />
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                  <div key={i} className="aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden group border border-white/5">
-                    <img 
-                      src={`https://images.unsplash.com/photo-${1590 + i}?q=80&w=600&auto=format&fit=crop`} 
-                      alt="Gallery style" 
-                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 hover:scale-110 cursor-crosshair" 
-                    />
-                  </div>
-                ))}
-              </div>
+              {galleryImages.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {galleryImages.map((img) => (
+                    <div key={img.id} className="aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden group border border-white/5">
+                      <img 
+                        src={img.image_url} 
+                        alt={img.name} 
+                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 hover:scale-110 cursor-crosshair" 
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-20 text-center border border-dashed border-white/10 rounded-3xl">
+                   <p className="text-white/20 uppercase tracking-[0.3em] text-sm">Brand Portfolio Loading...</p>
+                </div>
+              )}
             </div>
           </section>
 
@@ -50,12 +79,12 @@ export default function Home() {
 
       <footer className="py-12 bg-brand-obsidian border-t border-white/5">
         <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="text-2xl font-serif font-bold tracking-tighter">
-            LUX<span className="text-brand-gold italic">HAIR</span>
+          <div className="text-2xl font-serif font-bold tracking-tighter uppercase whitespace-nowrap">
+            {brandName.split(' ')[0]}<span className="text-brand-gold italic">{brandName.split(' ').slice(1).join(' ')}</span>
           </div>
           
           <div className="text-[10px] uppercase tracking-[0.4em] text-white/20 font-bold">
-            © 2026 LUX HAIR SUITE • All Rights Reserved
+            © {new Date().getFullYear()} {brandName.toUpperCase()} • All Rights Reserved
           </div>
           
           <div className="flex gap-8 text-[10px] uppercase tracking-widest text-white/40 font-bold">

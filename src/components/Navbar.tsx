@@ -2,18 +2,27 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ShoppingBag, User } from "lucide-react";
+import { Menu, X, ShoppingBag, Search } from "lucide-react";
 import Link from "next/link";
+import { getSiteMetadata } from "@/lib/supabase";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [brandName, setBrandName] = useState("LUX HAIR");
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
     window.addEventListener("scroll", handleScroll);
+
+    async function load() {
+      const metadata = await getSiteMetadata();
+      if (metadata?.brand_name) setBrandName(metadata.brand_name);
+    }
+    load();
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -24,7 +33,7 @@ export default function Navbar() {
       <div className="container mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="text-2xl font-serif font-bold tracking-tighter text-white">
-          LUX<span className="text-brand-gold italic">HAIR</span>
+          {brandName.split(' ')[0]}<span className="text-brand-gold italic">{brandName.split(' ').slice(1).join(' ')}</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -50,15 +59,6 @@ export default function Navbar() {
             <ShoppingBag className="w-5 h-5" />
           </motion.button>
           
-          <Link href="/admin">
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="p-2 text-white/80 hover:text-brand-gold transition-colors border border-white/10 rounded-full"
-            >
-              <User className="w-5 h-5" />
-            </motion.button>
-          </Link>
 
           <button 
             className="md:hidden p-2 text-white"

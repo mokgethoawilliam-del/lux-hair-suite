@@ -10,6 +10,7 @@ export default function Hero() {
     hero_headline: "Premium Hair Redefined.",
     hero_description: "Experience the ultimate in high-performance Frontals, Ponytails, and Weaves. Professional installations for the modern woman who demands excellence."
   });
+  const [whatsapp, setWhatsapp] = useState("27123456789");
 
   useEffect(() => {
     async function load() {
@@ -20,6 +21,7 @@ export default function Hero() {
           hero_description: metadata.hero_description || content.hero_description
         });
       }
+      if (metadata.whatsapp_number) setWhatsapp(metadata.whatsapp_number);
     }
     load();
   }, []);
@@ -53,6 +55,7 @@ export default function Hero() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => document.getElementById('collections')?.scrollIntoView({ behavior: 'smooth' })}
               className="px-8 py-4 bg-brand-gold text-brand-obsidian font-semibold rounded-full flex items-center gap-2 group transition-all"
             >
               Shop The Collection
@@ -62,6 +65,7 @@ export default function Hero() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => document.getElementById('installations')?.scrollIntoView({ behavior: 'smooth' })}
               className="px-8 py-4 border border-white/20 text-white font-semibold rounded-full hover:bg-white/5 transition-all"
             >
               Book Installation

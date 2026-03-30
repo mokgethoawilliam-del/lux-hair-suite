@@ -1,33 +1,33 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ExternalLink, Star } from "lucide-react";
-
-const products = [
-  {
-    name: "Professional Flat Iron",
-    brand: "GHD Gold",
-    price: "R3,200",
-    image: "https://images.unsplash.com/photo-1522338242992-e1a54906a8da?q=80&w=800&auto=format&fit=crop",
-    link: "https://www.takealot.com/ghd-gold-professional-styler/PLID52136004",
-  },
-  {
-    name: "Organic Hair Oil",
-    brand: "Moroccanoil",
-    price: "R450",
-    image: "https://images.unsplash.com/photo-1626015365107-16478987486e?q=80&w=800&auto=format&fit=crop",
-    link: "https://www.takealot.com/moroccanoil-treatment-100ml/PLID32851411",
-  },
-  {
-    name: "Silk Sleep Bonnet",
-    brand: "Luxe Care",
-    price: "R280",
-    image: "https://images.unsplash.com/photo-1598452963314-b09f397a5c48?q=80&w=800&auto=format&fit=crop",
-    link: "https://www.takealot.com/silk-satin-bonnet/PLID72136004",
-  },
-];
+import { ExternalLink, Star, Loader2 } from "lucide-react";
+import { supabase, getSiteMetadata } from "@/lib/supabase";
 
 export default function AffiliateSection() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [brandName, setBrandName] = useState("LUX HAIR");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const { data } = await supabase.from("products").select("*").eq("category", "Pro-Care").eq("is_in_stock", true);
+        const metadata = await getSiteMetadata();
+        if (data) setProducts(data);
+        if (metadata.brand_name) setBrandName(metadata.brand_name);
+      } catch (err) {
+        console.error("Error loading Pro-Care:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (isLoading && products.length === 0) return null;
+  if (!isLoading && products.length === 0) return null; // Hide if empty
   return (
     <section id="pro-care" className="py-24 bg-brand-obsidian">
       <div className="container mx-auto px-6">
@@ -46,7 +46,7 @@ export default function AffiliateSection() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {products.map((product, idx) => (
             <motion.div
-              key={product.name}
+              key={product.id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}
@@ -54,7 +54,7 @@ export default function AffiliateSection() {
             >
               <div className="relative w-40 h-40 mb-8 overflow-hidden rounded-2xl">
                 <img 
-                  src={product.image} 
+                  src={product.image_url} 
                   alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                 />
@@ -66,22 +66,22 @@ export default function AffiliateSection() {
                 ))}
               </div>
 
-              <h4 className="text-xl font-serif mb-1">{product.name}</h4>
+              <h4 className="text-xl font-serif mb-1 uppercase tracking-tight">{product.name}</h4>
               <p className="text-[10px] uppercase tracking-widest text-white/40 mb-4 font-bold">
-                {product.brand} • {product.price}
+                {product.description || 'Professional Grade'} • R{product.price}
               </p>
 
               <a 
-                href={product.link} 
+                href={product.affiliate_link} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="w-full py-3 bg-brand-obsidian border border-white/10 rounded-xl flex items-center justify-center gap-2 text-sm font-medium hover:bg-white/10 hover:border-white/20 transition-all uppercase tracking-widest text-xs"
+                className="w-full py-4 bg-brand-obsidian border border-white/10 rounded-xl flex items-center justify-center gap-2 text-sm font-medium hover:bg-white/10 hover:border-white/20 transition-all uppercase tracking-widest text-xs"
               >
                 Buy On Takealot <ExternalLink className="w-3 h-3" />
               </a>
               
               <span className="mt-4 text-[9px] text-white/20 uppercase tracking-tighter">
-                Recommended by Lux Hair
+                Recommended by {brandName}
               </span>
             </motion.div>
           ))}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { LayoutDashboard, Radio, Package, Calendar, Settings, Image as ImageIcon, Home } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -7,22 +8,33 @@ import { motion } from "framer-motion";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [brandName, setBrandName] = useState("LUX HAIR");
+
+  useEffect(() => {
+    async function load() {
+      const { getSiteMetadata } = await import("@/lib/supabase");
+      const metadata = await getSiteMetadata();
+      if (metadata.brand_name) setBrandName(metadata.brand_name);
+    }
+    load();
+  }, []);
 
   const menuItems = [
     { icon: <LayoutDashboard className="w-5 h-5" />, label: "Overview", href: "/admin" },
     { icon: <Radio className="w-5 h-5" />, label: "Lead Radar", href: "/admin/leads" },
     { icon: <Package className="w-5 h-5" />, label: "Inventory", href: "/admin/inventory" },
-    { icon: <Calendar className="w-5 h-5" />, label: "Bookings", href: "/admin/bookings" },
+    { icon: <Calendar className="w-5 h-5" />, label: "Orders & Sales", href: "/admin/orders" },
     { icon: <ImageIcon className="w-5 h-5" />, label: "Gallery", href: "/admin/gallery" },
-    { icon: <Settings className="w-5 h-5" />, label: "Editor", href: "/admin/editor" },
+    { icon: <Home className="w-5 h-5" />, label: "Site Editor", href: "/admin/editor" },
+    { icon: <Settings className="w-5 h-5" />, label: "App Settings", href: "/admin/settings" },
   ];
 
   return (
     <div className="min-h-screen bg-brand-obsidian flex text-white font-sans">
       {/* Sidebar */}
       <aside className="w-72 border-r border-white/5 p-8 flex flex-col gap-12 sticky top-0 h-screen overflow-y-auto">
-        <Link href="/" className="text-2xl font-serif font-bold tracking-tighter">
-          LUX<span className="text-brand-gold italic">HAIR</span>
+        <Link href="/" className="text-2xl font-serif font-bold tracking-tighter uppercase">
+          {brandName.split(' ')[0]}<span className="text-brand-gold italic">{brandName.split(' ').slice(1).join(' ')}</span>
           <span className="text-[10px] block font-sans tracking-widest text-white/30 ml-1">MISSION CONTROL</span>
         </Link>
 

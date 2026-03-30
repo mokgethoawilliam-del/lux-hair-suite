@@ -1,24 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Upload, X, Check, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Upload, X, Check, Image as ImageIcon, Loader2, Plus } from "lucide-react";
+import { fetchGalleryImages, uploadGalleryImage, deleteGalleryImage } from "@/lib/supabase";
 
 export default function GalleryManager() {
   const [images, setImages] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = () => {
-    setIsUploading(true);
-    // Simulate Supabase Storage upload
-    setTimeout(() => {
-      setImages([...images, { id: Date.now(), url: "https://images.unsplash.com/photo-159015901?q=80&w=400" }]);
-      setIsUploading(false);
-    }, 1500);
+  const loadImages = async () => {
+    try {
+      const data = await fetchGalleryImages();
+      setImages(data);
+    } catch (error) {
+      console.error("Error fetching images:", error);
+    }
   };
 
-  const removeImage = (id: number) => {
-    setImages(images.filter(img => img.id !== id));
+  useEffect(() => {
+    loadImages();
+  }, []);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      await uploadGalleryImage(file);
+      await loadImages();
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("Upload failed. Check Supabase connection.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeImage = async (id: string, imageUrl: string) => {
+    if (!confirm("Are you sure you want to delete this image?")) return;
+    
+    try {
+      await deleteGalleryImage(id, imageUrl);
+      setImages(images.filter(img => img.id !== id));
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      alert("Delete failed.");
+    }
+  };
+
+  const triggerUpload = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -30,9 +64,16 @@ export default function GalleryManager() {
         </div>
         
         <div className="flex gap-4">
-           {/* Hidden File Input Simulation */}
+           {/* Hidden File Input */}
+           <input 
+             type="file" 
+             ref={fileInputRef} 
+             onChange={handleFileChange} 
+             className="hidden" 
+             accept="image/*"
+           />
            <button 
-             onClick={handleUpload}
+             onClick={triggerUpload}
              disabled={isUploading}
              className="px-8 py-4 bg-brand-gold text-brand-obsidian font-bold rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-lg shadow-brand-gold/20"
            >
@@ -45,7 +86,7 @@ export default function GalleryManager() {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
         {/* Upload Slot */}
         <div 
-          onClick={handleUpload}
+          onClick={triggerUpload}
           className="aspect-[3/4] bg-white/5 border-2 border-dashed border-white/10 rounded-[32px] flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-brand-gold/30 hover:bg-white/[0.08] transition-all group"
         >
           <div className="p-4 bg-white/5 rounded-full group-hover:scale-110 transition-all">
@@ -61,10 +102,10 @@ export default function GalleryManager() {
             animate={{ opacity: 1, scale: 1 }}
             className="group relative aspect-[3/4] rounded-[32px] overflow-hidden border border-white/10"
           >
-            <img src={img.url} alt="Gallery" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+            <img src={img.image_url} alt="Gallery" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
             <div className="absolute inset-0 bg-brand-obsidian/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
               <button 
-                onClick={() => removeImage(img.id)}
+                onClick={() => removeImage(img.id, img.image_url)}
                 className="p-3 bg-red-500/80 text-white rounded-full hover:bg-red-500 transition-all"
               >
                 <X className="w-5 h-5" />
@@ -100,25 +141,5 @@ export default function GalleryManager() {
          <span className="text-xs font-bold text-white/20 italic">0.4 MB / 1.0 GB</span>
       </div>
     </div>
-  );
-}
-
-// Internal helper component since Lucide Plus wasn't imported in this specific file call
-function Plus({ className }: { className?: string }) {
-  return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width="24" 
-      height="24" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      className={className}
-    >
-      <path d="M5 12h14" /><path d="M12 5v14" />
-    </svg>
   );
 }
