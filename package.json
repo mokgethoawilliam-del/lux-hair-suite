@@ -30,5 +30,12 @@
     "eslint-config-next": "15.1.7",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "react-paystack": {
+      "react": "^19.0.0",
+      "react-dom": "^19.0.0"
+    }
   }
 }
+
