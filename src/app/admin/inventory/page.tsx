@@ -2,11 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Package, Search, Plus, Trash2, ArrowUpDown, Loader2 } from "lucide-react";
+import { Search, Plus, Trash2, ArrowUpDown, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  image_url?: string;
+  is_in_stock: boolean;
+  description?: string;
+  affiliate_link?: string;
+}
+
 export default function InventoryManager() {
-  const [inventory, setInventory] = useState<any[]>([]);
+  const [inventory, setInventory] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,7 +31,7 @@ export default function InventoryManager() {
         .order("created_at", { ascending: false });
       
       if (error) throw error;
-      setInventory(data || []);
+      setInventory((data as Product[]) || []);
     } catch (err) {
       console.error("Error loading inventory:", err);
     } finally {
@@ -83,13 +94,14 @@ export default function InventoryManager() {
         .single();
       
       if (error) throw error;
-      setInventory([data, ...inventory]);
+      setInventory([data as Product, ...inventory]);
       setIsAddModalOpen(false);
       setNewProduct({ name: "", category: "Frontal", price: 0, image_url: "", type: "In-Stock", description: "", affiliate_link: "" });
       setImageFile(null);
-    } catch (err: any) {
-      console.error("Full Error:", err);
-      alert(`Error adding item: ${err.message || 'Check your permissions or Supabase connection.'}`);
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Full Error:", error);
+      alert(`Error adding item: ${error.message || 'Check your permissions or Supabase connection.'}`);
     } finally {
       setIsSaving(false);
     }

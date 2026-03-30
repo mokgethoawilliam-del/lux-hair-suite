@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Key, Shield, Save, Loader2, Info, Globe, Sparkles, TrendingUp, Users, Package, ShoppingCart, Zap } from "lucide-react";
+import { Key, Shield, Save, Loader2, Globe, Sparkles, TrendingUp, Users, Package } from "lucide-react";
 import { getAppSettings, updateAppSettings, getPlatformStats } from "@/lib/supabase";
 
 export default function AdminSettings() {
@@ -115,12 +115,6 @@ export default function AdminSettings() {
                 placeholder="AI_STUDIO_KEY"
               />
             </div>
-          </div>
-          <div className="p-6 bg-white/5 rounded-2xl flex gap-4">
-             <Zap className="w-5 h-5 text-brand-gold shrink-0" />
-             <p className="text-[10px] text-white/40 leading-relaxed uppercase font-bold">
-                Powers the "Magic Designer" in the Site Editor. Get your key at Google AI Studio.
-             </p>
           </div>
         </motion.div>
 

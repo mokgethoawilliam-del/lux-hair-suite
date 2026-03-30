@@ -67,7 +67,7 @@ export async function generateSiteDesign(context: {
 
   try {
     return JSON.parse(text);
-  } catch (e) {
+  } catch {
     console.error("Failed to parse Gemini JSON:", text);
     throw new Error("AI generated an invalid format. Please try again.");
   }

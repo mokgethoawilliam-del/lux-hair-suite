@@ -24,7 +24,7 @@ export async function getSiteMetadata() {
   
   if (error) return {};
   
-  return data.reduce((acc: any, item: any) => {
+  return data.reduce((acc: Record<string, string>, item: { key: string; value: string }) => {
     acc[item.key] = item.value;
     return acc;
   }, {});
@@ -72,7 +72,7 @@ export async function fetchGalleryImages() {
 
 export async function uploadImage(file: File, bucket: string = "gallery") {
   const fileName = `${Date.now()}-${file.name}`;
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from(bucket)
     .upload(fileName, file);
 
@@ -164,7 +164,7 @@ export async function getAppSettings() {
   
   if (error) throw error;
 
-  return data.reduce((acc: any, item: any) => {
+  return data.reduce((acc: Record<string, string>, item: { key: string; value: string }) => {
     acc[item.key] = item.value;
     return acc;
   }, {});

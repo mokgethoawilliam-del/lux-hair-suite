@@ -13,12 +13,20 @@ const PaystackButton = dynamic(
   { ssr: false }
 );
 
+interface CheckoutProduct {
+  id: string;
+  name: string;
+  price: number;
+  image_url?: string;
+  category: string;
+}
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const productId = searchParams.get("id");
 
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<CheckoutProduct | null>(null);
   const [customer, setCustomer] = useState({ name: "", email: "", whatsapp: "" });
   const [paystackKey, setPaystackKey] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +40,7 @@ function CheckoutContent() {
 
       // 1. Fetch Product
       const { data } = await supabase.from("products").select("*").eq("id", productId).single();
-      setProduct(data);
+      setProduct(data as CheckoutProduct);
 
       // 2. Fetch Paystack Public Key
       const settings = await getAppSettings();
@@ -41,7 +49,7 @@ function CheckoutContent() {
       setIsLoading(false);
     }
     init();
-  }, [productId]);
+  }, [productId, router]);
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-brand-obsidian"><Loader2 className="animate-spin text-brand-gold" /></div>;
 
@@ -56,12 +64,12 @@ function CheckoutContent() {
     },
     publicKey: paystackKey,
     text: "Pay Now",
-    onSuccess: async (reference: any) => {
+    onSuccess: async (reference: { reference: string }) => {
       try {
         await createOrder({
           customer: { full_name: customer.name, email: customer.email, whatsapp_number: customer.whatsapp },
           product_id: productId!,
-          amount: product.price,
+          amount: product?.price || 0,
           payment_reference: reference.reference,
           payment_method: 'Paystack',
         });

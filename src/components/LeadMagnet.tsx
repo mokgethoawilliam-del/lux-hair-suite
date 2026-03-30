@@ -45,7 +45,7 @@ export default function LeadMagnet() {
               Join the <span className="italic">Drop List</span>.
             </h2>
             <p className="text-white/60 mb-10 max-w-lg mx-auto leading-relaxed">
-              Get early access to our premium bundles and receive our <strong>"2026 Weave Care Guide"</strong> PDF instantly via WhatsApp.
+              Get early access to our premium bundles and receive our <strong>&quot;2026 Weave Care Guide&quot;</strong> PDF instantly via WhatsApp.
             </p>
 
             {status === "success" ? (
@@ -57,7 +57,7 @@ export default function LeadMagnet() {
                 <div className="p-4 bg-brand-gold text-brand-obsidian rounded-full">
                   <Check className="w-8 h-8" />
                 </div>
-                <h3 className="text-2xl font-serif">You're on the list!</h3>
+                <h3 className="text-2xl font-serif">You&apos;re on the list!</h3>
                 <p className="text-white/40">Check your WhatsApp for your gift.</p>
               </motion.div>
             ) : (

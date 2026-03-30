@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ShoppingBag, Search } from "lucide-react";
+import { Menu, X, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { getSiteMetadata } from "@/lib/supabase";
 

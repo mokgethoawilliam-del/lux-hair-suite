@@ -5,15 +5,21 @@ import { motion } from "framer-motion";
 import { Upload, X, Check, Image as ImageIcon, Loader2, Plus } from "lucide-react";
 import { fetchGalleryImages, uploadGalleryImage, deleteGalleryImage } from "@/lib/supabase";
 
+interface GalleryImage {
+  id: string;
+  image_url: string;
+  name?: string;
+}
+
 export default function GalleryManager() {
-  const [images, setImages] = useState<any[]>([]);
+  const [images, setImages] = useState<GalleryImage[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadImages = async () => {
     try {
       const data = await fetchGalleryImages();
-      setImages(data);
+      setImages(data as GalleryImage[]);
     } catch (error) {
       console.error("Error fetching images:", error);
     }

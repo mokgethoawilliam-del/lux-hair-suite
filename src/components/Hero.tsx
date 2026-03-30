@@ -10,18 +10,15 @@ export default function Hero() {
     hero_headline: "Premium Hair Redefined.",
     hero_description: "Experience the ultimate in high-performance Frontals, Ponytails, and Weaves. Professional installations for the modern woman who demands excellence."
   });
-  const [whatsapp, setWhatsapp] = useState("27123456789");
-
   useEffect(() => {
     async function load() {
       const metadata = await getSiteMetadata();
       if (metadata.hero_headline) {
         setContent({
           hero_headline: metadata.hero_headline,
-          hero_description: metadata.hero_description || content.hero_description
+          hero_description: metadata.hero_description || "Experience the ultimate in high-performance Frontals, Ponytails, and Weaves. Professional installations for the modern woman who demands excellence."
         });
       }
-      if (metadata.whatsapp_number) setWhatsapp(metadata.whatsapp_number);
     }
     load();
   }, []);

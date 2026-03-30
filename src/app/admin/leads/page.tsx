@@ -2,18 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Radio, MessageSquare, ExternalLink, Filter, Search, MoreVertical } from "lucide-react";
+import { Radio, MessageSquare, ExternalLink, Filter, MoreVertical } from "lucide-react";
 import { fetchLeads } from "@/lib/supabase";
 
+interface Lead {
+  id: string;
+  name?: string;
+  whatsapp_number?: string;
+  source?: string;
+  timestamp: string;
+  snippet?: string;
+  status?: string;
+}
+
 export default function LeadRadar() {
-  const [leads, setLeads] = useState<any[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadLeads = async () => {
     setIsLoading(true);
     try {
       const data = await fetchLeads();
-      setLeads(data);
+      setLeads(data as Lead[]);
     } catch (error) {
       console.error("Error fetching leads:", error);
     } finally {
@@ -80,7 +90,7 @@ export default function LeadRadar() {
              <p className="text-white/30 uppercase tracking-widest text-sm">No leads captured yet.</p>
           </div>
         )}
-        {leads.map((lead: any, idx: number) => (
+        {leads.map((lead, idx) => (
           <motion.div
             key={lead.id}
             initial={{ opacity: 0, scale: 0.95 }}
@@ -105,7 +115,7 @@ export default function LeadRadar() {
                 <span className="text-[10px] text-white/30 uppercase font-bold">{new Date(lead.timestamp).toLocaleDateString()}</span>
               </div>
               <p className="text-white/50 leading-relaxed italic border-l-2 border-brand-gold/30 pl-4 py-2 mb-6">
-                "{lead.snippet || `New inquiry from ${lead.name || 'customer'} regarding services.`}"
+                &quot;{lead.snippet || `New inquiry from ${lead.name || 'customer'} regarding services.`}&quot;
               </p>
               
               <div className="flex items-center justify-between p-4 bg-brand-emerald/5 rounded-2xl border border-brand-emerald/10">
@@ -122,7 +132,7 @@ export default function LeadRadar() {
 
             <div className="flex gap-4">
               <button 
-                onClick={() => handleQuickReply(lead.name, lead.whatsapp_number)}
+                onClick={() => handleQuickReply(lead.name || "Customer", lead.whatsapp_number)}
                 className="flex-1 py-4 bg-brand-gold text-brand-obsidian font-bold rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] transition-all shadow-lg shadow-brand-gold/10"
               >
                 <MessageSquare className="w-4 h-4" />

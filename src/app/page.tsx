@@ -9,8 +9,14 @@ import AffiliateSection from "@/components/AffiliateSection";
 import LeadMagnet from "@/components/LeadMagnet";
 import { fetchGalleryImages } from "@/lib/supabase";
 
+interface GalleryImage {
+  id: string;
+  image_url: string;
+  name?: string;
+}
+
 export default function Home() {
-  const [galleryImages, setGalleryImages] = useState<any[]>([]);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [brandName, setBrandName] = useState("LUX HAIR");
 
   useEffect(() => {
@@ -21,7 +27,7 @@ export default function Home() {
         if (meta.brand_name) setBrandName(meta.brand_name);
         
         const data = await fetchGalleryImages();
-        setGalleryImages(data);
+        setGalleryImages(data as GalleryImage[]);
       } catch (error) {
         console.error("Error loading home data:", error);
       }
@@ -58,7 +64,7 @@ export default function Home() {
                     <div key={img.id} className="aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden group border border-white/5">
                       <img 
                         src={img.image_url} 
-                        alt={img.name} 
+                        alt={img.name || "Gallery Image"} 
                         className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 hover:scale-110 cursor-crosshair" 
                       />
                     </div>

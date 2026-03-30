@@ -2,12 +2,26 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Save, RefreshCw, Type, Layout, Globe, Image as ImageIcon, Sparkles, ArrowRight, Loader2, X, CheckCircle2 } from "lucide-react";
-import { getSiteMetadata, updateSiteMetadata, supabase } from "@/lib/supabase";
+import { Save, RefreshCw, Layout, Globe, Image as ImageIcon, Sparkles, ArrowRight, Loader2, X, CheckCircle2 } from "lucide-react";
+import { getSiteMetadata, updateSiteMetadata } from "@/lib/supabase";
 import { askDesignerQuestions, generateSiteDesign } from "@/lib/ai";
 
+interface SiteMetadata {
+  brand_name?: string;
+  hero_headline?: string;
+  hero_description?: string;
+  whatsapp_number?: string;
+  [key: string]: string | undefined;
+}
+
+interface Design {
+  brand_name: string;
+  hero_headline: string;
+  hero_description: string;
+}
+
 export default function SiteEditor() {
-  const [metadata, setMetadata] = useState<any>({});
+  const [metadata, setMetadata] = useState<SiteMetadata>({});
   const [isSaving, setIsSaving] = useState(false);
   
   // AI Wizard State
@@ -17,12 +31,12 @@ export default function SiteEditor() {
   const [questions, setQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<string[]>([]);
   const [isAILoading, setIsAILoading] = useState(false);
-  const [aiResult, setAiResult] = useState<any>(null);
+  const [aiResult, setAiResult] = useState<Design | null>(null);
 
   useEffect(() => {
     async function load() {
       const data = await getSiteMetadata();
-      setMetadata(data);
+      setMetadata(data as SiteMetadata);
     }
     load();
   }, []);
@@ -53,8 +67,9 @@ export default function SiteEditor() {
       setQuestions(qs);
       setAnswers(new Array(qs.length).fill(""));
       setWizardStep(2);
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message);
     } finally {
       setIsAILoading(false);
     }
@@ -68,10 +83,11 @@ export default function SiteEditor() {
         answers,
         currentBrand: metadata.brand_name || "Lux Hair Suite"
       });
-      setAiResult(design);
+      setAiResult(design as Design);
       setWizardStep(3);
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message);
     } finally {
       setIsAILoading(false);
     }

@@ -22,8 +22,8 @@ function SubmitButton() {
 }
 
 function LoginContent() {
-  const searchParams = useSearchParams();
-  const error = searchParams.get("error");
+  const params = useSearchParams();
+  const error = params?.get("error");
 
   return (
     <div className="min-h-screen bg-brand-obsidian flex items-center justify-center p-6 relative overflow-hidden">

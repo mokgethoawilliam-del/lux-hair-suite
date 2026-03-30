@@ -2,11 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Scissors, Sparkle, Calendar, Loader2, MessageCircle, ShoppingCart } from "lucide-react";
+import { Loader2, MessageCircle, ShoppingCart } from "lucide-react";
 import { getSiteMetadata, supabase } from "@/lib/supabase";
 
+interface Service {
+  id: string;
+  name: string;
+  price: number;
+  image_url?: string;
+  description?: string;
+  category: string;
+  is_in_stock: boolean;
+}
+
 export default function InstallationSuite() {
-  const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [whatsapp, setWhatsapp] = useState("27123456789");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -21,7 +31,7 @@ export default function InstallationSuite() {
           .eq("is_in_stock", true);
         
         if (error) throw error;
-        setServices(data || []);
+        setServices((data as Service[]) || []);
 
         // 2. Fetch WhatsApp
         const metadata = await getSiteMetadata();
@@ -35,20 +45,11 @@ export default function InstallationSuite() {
     load();
   }, []);
 
-  const getIcon = (idx: number) => {
-    const icons = [
-      <Scissors key="s" className="w-5 h-5 text-brand-gold" />,
-      <Sparkle key="sp" className="w-5 h-5 text-brand-gold" />,
-      <Calendar key="c" className="w-5 h-5 text-brand-gold" />,
-    ];
-    return icons[idx % icons.length];
-  };
-
   const handleWhatsAppInquiry = (name: string) => {
     window.open(`https://wa.me/${whatsapp}?text=Hi, I'm interested in the ${name}.`, "_blank");
   };
 
-  const handleBuyNow = (id: string) => {
+  const handleBuyNow = () => {
     // Add cart logic here
   };
 
@@ -88,7 +89,7 @@ export default function InstallationSuite() {
                     <div className="relative aspect-[4/5] overflow-hidden">
                       <div className="absolute inset-0 bg-brand-emerald/20 group-hover:bg-transparent transition-all duration-500 z-10" />
                       <img 
-                        src={cat.image_url} 
+                        src={cat.image_url || ""} 
                         alt={cat.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                       />

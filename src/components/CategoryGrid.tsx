@@ -6,8 +6,18 @@ import { MessageCircle, ShoppingCart, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase, getSiteMetadata } from "@/lib/supabase";
 
+interface HairProduct {
+  id: string;
+  name: string;
+  price: number;
+  image_url?: string;
+  description?: string;
+  category: string;
+  is_in_stock: boolean;
+}
+
 export default function CategoryGrid() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<HairProduct[]>([]);
   const [whatsapp, setWhatsapp] = useState("27123456789");
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -24,7 +34,7 @@ export default function CategoryGrid() {
           .limit(6);
         
         if (error) throw error;
-        setProducts(data || []);
+        setProducts((data as HairProduct[]) || []);
 
         // 2. Fetch WhatsApp
         const metadata = await getSiteMetadata();
@@ -87,7 +97,7 @@ export default function CategoryGrid() {
                 <div className="relative aspect-[4/5] overflow-hidden">
                   <div className="absolute inset-0 bg-brand-emerald/20 group-hover:bg-transparent transition-all duration-500 z-10" />
                   <img 
-                    src={product.image_url} 
+                    src={product.image_url || "/placeholder.jpg"} 
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                   />

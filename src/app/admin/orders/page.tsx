@@ -2,18 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ShoppingBag, User, Calendar, CreditCard, Loader2, RefreshCw } from "lucide-react";
+import { ShoppingBag, User, CreditCard, Loader2, RefreshCw } from "lucide-react";
 import { fetchOrders } from "@/lib/supabase";
 
+interface Order {
+  id: string;
+  amount: number;
+  status: string;
+  payment_reference: string;
+  created_at: string;
+  products?: { name: string };
+  customers?: { full_name: string; whatsapp_number: string; email: string };
+}
+
 export default function AdminOrders() {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadOrders = async () => {
     setIsLoading(true);
     try {
       const data = await fetchOrders();
-      setOrders(data);
+      setOrders(data as Order[]);
     } catch (err) {
       console.error("Error fetching orders:", err);
     } finally {

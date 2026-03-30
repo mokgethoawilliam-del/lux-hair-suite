@@ -2,11 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ExternalLink, Star, Loader2 } from "lucide-react";
+import { ExternalLink, Star } from "lucide-react";
 import { supabase, getSiteMetadata } from "@/lib/supabase";
 
+interface ProCareProduct {
+  id: string;
+  name: string;
+  price: number;
+  image_url?: string;
+  description?: string;
+  affiliate_link?: string;
+  category: string;
+  is_in_stock: boolean;
+}
+
 export default function AffiliateSection() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProCareProduct[]>([]);
   const [brandName, setBrandName] = useState("LUX HAIR");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -15,7 +26,7 @@ export default function AffiliateSection() {
       try {
         const { data } = await supabase.from("products").select("*").eq("category", "Pro-Care").eq("is_in_stock", true);
         const metadata = await getSiteMetadata();
-        if (data) setProducts(data);
+        if (data) setProducts(data as ProCareProduct[]);
         if (metadata.brand_name) setBrandName(metadata.brand_name);
       } catch (err) {
         console.error("Error loading Pro-Care:", err);
