@@ -1,14 +1,16 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { CreditCard, Smartphone, ShieldCheck, Loader2 } from "lucide-react";
 import { getAppSettings, createOrder, supabase } from "@/lib/supabase";
 
+export const dynamic = 'force-dynamic';
+
 // Dynamically import Paystack to prevent SSR issues
-const PaystackButton = dynamic(
+const PaystackButton = nextDynamic(
   () => import("react-paystack").then((mod) => mod.PaystackButton),
   { ssr: false }
 );
