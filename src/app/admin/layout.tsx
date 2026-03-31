@@ -1,90 +1,163 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { LayoutDashboard, Radio, Package, Calendar, Settings, Image as ImageIcon, Home } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import {
+  LayoutDashboard, Radio, Package, ShoppingBag,
+  Image as ImageIcon, PenSquare, Settings, ExternalLink,
+  User, ChevronRight,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import { getAppSettings } from "@/lib/supabase";
+
+interface AdminProfile {
+  admin_name: string;
+  store_name: string;
+  avatar_color: string;
+}
+
+const navItems = [
+  { icon: LayoutDashboard, label: "Overview", href: "/admin" },
+  { icon: Radio, label: "Lead Radar", href: "/admin/leads" },
+  { icon: Package, label: "Inventory", href: "/admin/inventory" },
+  { icon: ShoppingBag, label: "Orders & Sales", href: "/admin/orders" },
+  { icon: ImageIcon, label: "Gallery", href: "/admin/gallery" },
+  { icon: PenSquare, label: "Site Editor", href: "/admin/editor" },
+  { icon: Settings, label: "Settings", href: "/admin/settings" },
+];
+
+function Clock() {
+  const [time, setTime] = useState<string>("");
+  const [date, setDate] = useState<string>("");
+
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setTime(now.toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+      setDate(now.toLocaleDateString("en-ZA", { weekday: "long", day: "numeric", month: "long", year: "numeric" }));
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="px-4 py-3 bg-white/[0.03] border border-white/5 rounded-xl text-center">
+      <p className="text-lg font-mono font-bold text-white tracking-widest">{time}</p>
+      <p className="text-[9px] text-white/30 uppercase tracking-widest font-bold mt-0.5">{date}</p>
+    </div>
+  );
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [brandName, setBrandName] = useState("LUX HAIR");
+  const [profile, setProfile] = useState<AdminProfile>({
+    admin_name: "Admin",
+    store_name: "My Store",
+    avatar_color: "#6366f1",
+  });
 
-  useEffect(() => {
-    async function load() {
-      const { getSiteMetadata } = await import("@/lib/supabase");
-      const metadata = await getSiteMetadata();
-      if (metadata.brand_name) setBrandName(metadata.brand_name);
-    }
-    load();
+  const loadProfile = useCallback(async () => {
+    try {
+      const s = await getAppSettings();
+      setProfile({
+        admin_name: s.admin_name || "Admin",
+        store_name: s.store_name || "My Store",
+        avatar_color: s.avatar_color || "#6366f1",
+      });
+    } catch { /* silently fail */ }
   }, []);
 
-  const menuItems = [
-    { icon: <LayoutDashboard className="w-5 h-5" />, label: "Overview", href: "/admin" },
-    { icon: <Radio className="w-5 h-5" />, label: "Lead Radar", href: "/admin/leads" },
-    { icon: <Package className="w-5 h-5" />, label: "Inventory", href: "/admin/inventory" },
-    { icon: <Calendar className="w-5 h-5" />, label: "Orders & Sales", href: "/admin/orders" },
-    { icon: <ImageIcon className="w-5 h-5" />, label: "Gallery", href: "/admin/gallery" },
-    { icon: <Home className="w-5 h-5" />, label: "Site Editor", href: "/admin/editor" },
-    { icon: <Settings className="w-5 h-5" />, label: "App Settings", href: "/admin/settings" },
-  ];
+  useEffect(() => { loadProfile(); }, [loadProfile]);
+
+  const initials = profile.admin_name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
-    <div className="min-h-screen bg-brand-obsidian flex text-white font-sans">
+    <div className="min-h-screen bg-[#0f1117] flex text-white font-sans">
       {/* Sidebar */}
-      <aside className="w-72 border-r border-white/5 p-8 flex flex-col gap-12 sticky top-0 h-screen overflow-y-auto">
-        <Link href="/" className="text-2xl font-serif font-bold tracking-tighter uppercase">
-          {brandName.split(' ')[0]}<span className="text-brand-gold italic">{brandName.split(' ').slice(1).join(' ')}</span>
-          <span className="text-[10px] block font-sans tracking-widest text-white/30 ml-1">MISSION CONTROL</span>
-        </Link>
+      <aside className="w-[260px] flex-shrink-0 flex flex-col border-r border-white/[0.06] sticky top-0 h-screen overflow-y-auto">
+        {/* Brand */}
+        <div className="px-6 pt-8 pb-6 border-b border-white/[0.06]">
+          <p className="text-[9px] uppercase tracking-[0.3em] text-indigo-400/50 font-bold mb-1">Admin Portal</p>
+          <p className="text-lg font-bold text-white truncate">{profile.store_name}</p>
+        </div>
 
-        <nav className="flex-1 flex flex-col gap-2">
-          {menuItems.map((item) => {
-            const isActive = pathname === item.href;
+        {/* Clock */}
+        <div className="px-4 py-4 border-b border-white/[0.06]">
+          <Clock />
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          {navItems.map(({ icon: Icon, label, href }) => {
+            const active = pathname === href;
             return (
-              <Link 
-                key={item.label} 
-                href={item.href}
-                className={`flex items-center gap-4 px-6 py-4 rounded-xl transition-all group ${isActive ? "bg-brand-emerald text-brand-gold shadow-xl" : "hover:bg-white/5 text-white/50 hover:text-white"}`}
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${
+                  active
+                    ? "bg-indigo-500/15 text-white border border-indigo-500/20"
+                    : "text-white/40 hover:text-white hover:bg-white/[0.04] border border-transparent"
+                }`}
               >
-                <div className={`transition-all ${isActive ? "scale-110" : "group-hover:scale-110"}`}>
-                  {item.icon}
-                </div>
-                <span className="text-sm font-medium">{item.label}</span>
-                {isActive && (
-                  <motion.div 
-                    layoutId="activeTab"
-                    className="ml-auto w-1.5 h-1.5 bg-brand-gold rounded-full"
-                  />
-                )}
+                <Icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-indigo-400" : "group-hover:text-indigo-400"} transition-colors`} />
+                <span className="text-sm font-medium">{label}</span>
+                {active && <ChevronRight className="w-3 h-3 text-indigo-400 ml-auto" />}
               </Link>
             );
           })}
         </nav>
 
-        <div className="pt-8 border-t border-white/10 flex flex-col gap-4">
-          <Link 
-            href="/" 
-            className="flex items-center gap-4 px-6 py-4 text-white/30 hover:text-white transition-all text-sm font-medium"
+        {/* Footer */}
+        <div className="px-3 pb-4 space-y-1 border-t border-white/[0.06] pt-4">
+          <Link
+            href="/"
+            className="flex items-center gap-3 px-4 py-3 text-white/30 hover:text-white transition-all rounded-xl hover:bg-white/[0.04] text-sm font-medium"
           >
-            <Home className="w-5 h-5" />
-            View Site
+            <ExternalLink className="w-4 h-4" />
+            View Live Site
           </Link>
-          <div className="px-6 py-4 bg-white/5 rounded-2xl flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-brand-gold flex items-center justify-center text-brand-obsidian font-bold text-xs uppercase">
-              BH
-            </div>
-            <div>
-              <p className="text-xs font-bold leading-none">Bella Hair</p>
-              <p className="text-[10px] text-white/30 uppercase mt-1">Admin Mode</p>
-            </div>
-          </div>
+
+          {/* Profile Card */}
+          <Link href="/admin/profile">
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              className="flex items-center gap-3 px-4 py-3 bg-white/[0.03] hover:bg-indigo-500/10 border border-white/[0.06] hover:border-indigo-500/20 rounded-xl cursor-pointer transition-all group"
+            >
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
+                style={{ backgroundColor: profile.avatar_color + "33", border: `1px solid ${profile.avatar_color}55` }}
+              >
+                <span style={{ color: profile.avatar_color }}>{initials}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-white truncate">{profile.admin_name}</p>
+                <p className="text-[9px] text-indigo-400/60 uppercase tracking-widest font-bold">Admin · Profile</p>
+              </div>
+              <User className="w-3 h-3 text-white/20 group-hover:text-indigo-400 ml-auto transition-colors" />
+            </motion.div>
+          </Link>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-12 overflow-y-auto">
-        {children}
+      {/* Main */}
+      <main className="flex-1 overflow-y-auto">
+        <motion.div
+          key={pathname}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="p-10 max-w-7xl"
+        >
+          {children}
+        </motion.div>
       </main>
     </div>
   );

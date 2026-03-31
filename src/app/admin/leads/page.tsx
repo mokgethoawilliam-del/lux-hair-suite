@@ -69,17 +69,17 @@ export default function LeadRadar() {
 
       {/* Stats Bar */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-8 bg-brand-emerald/10 border border-brand-emerald/20 rounded-3xl">
-          <p className="text-white/30 text-xs uppercase tracking-widest font-bold mb-2">Active Signals</p>
-          <p className="text-4xl font-serif">12</p>
+        <div className="p-8 bg-indigo-500/10 border border-indigo-500/20 rounded-3xl">
+          <p className="text-white/30 text-xs uppercase tracking-widest font-bold mb-2">Total Signals</p>
+          <p className="text-4xl font-bold text-white">{isLoading ? "—" : leads.length.toString().padStart(2, "0")}</p>
         </div>
-        <div className="p-8 bg-white/5 border border-white/5 rounded-3xl">
-          <p className="text-white/30 text-xs uppercase tracking-widest font-bold mb-2">High Intent</p>
-          <p className="text-4xl font-serif text-brand-gold">08</p>
+        <div className="p-8 bg-white/[0.03] border border-white/[0.06] rounded-3xl">
+          <p className="text-white/30 text-xs uppercase tracking-widest font-bold mb-2">New (Unread)</p>
+          <p className="text-4xl font-bold text-indigo-400">{isLoading ? "—" : leads.filter(l => !l.status || l.status === "New").length.toString().padStart(2, "0")}</p>
         </div>
-        <div className="p-8 bg-white/5 border border-white/5 rounded-3xl">
-          <p className="text-white/30 text-xs uppercase tracking-widest font-bold mb-2">Response Rate</p>
-          <p className="text-4xl font-serif">94%</p>
+        <div className="p-8 bg-white/[0.03] border border-white/[0.06] rounded-3xl">
+          <p className="text-white/30 text-xs uppercase tracking-widest font-bold mb-2">Responded</p>
+          <p className="text-4xl font-bold text-white">{isLoading ? "—" : (leads.length > 0 ? `${Math.round((leads.filter(l => l.status === "Contacted").length / leads.length) * 100)}%` : "0%")}</p>
         </div>
       </div>
 
