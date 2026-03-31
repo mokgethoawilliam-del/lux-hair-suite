@@ -14,6 +14,7 @@ export default function AdminSettings() {
     business_focus: "Hair & Beauty",
     admin_name: "",
     store_name: "",
+    about_us: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -27,6 +28,7 @@ export default function AdminSettings() {
         business_focus: s.business_focus || "Hair & Beauty",
         admin_name: s.admin_name || "",
         store_name: s.store_name || "",
+        about_us: s.about_us || "",
       }))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -42,10 +44,12 @@ export default function AdminSettings() {
       // We'd ideally fetch siteId from context, but for now we'll assume the session site
       // (Simplified for this MVP stage)
 
-      // 3. Sync store_name to landing page brand_name
-      if (settings.store_name) {
-        await updateSiteMetadata({ brand_name: settings.store_name });
-      }
+      // 3. Sync store_name & about_us to landing page metadata
+      const metaToSync: Record<string, string> = { business_focus: settings.business_focus };
+      if (settings.store_name) metaToSync.brand_name = settings.store_name;
+      if (settings.about_us) metaToSync.about_us = settings.about_us;
+      
+      await updateSiteMetadata(metaToSync);
 
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -237,6 +241,19 @@ export default function AdminSettings() {
             <option value="EUR">Euro (EUR)</option>
             <option value="GBP">British Pound (GBP)</option>
           </select>
+        </div>
+
+        <div className="space-y-3 pt-6 border-t border-white/5">
+          <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest">Brand Narrative / About Us</label>
+          <textarea
+            value={settings.about_us}
+            onChange={(e) => setSettings({ ...settings, about_us: e.target.value })}
+            className="w-full h-32 px-4 py-3 bg-[#0f1117] border border-white/10 rounded-xl focus:border-indigo-500/50 outline-none transition-all text-white text-sm resize-none leading-relaxed"
+            placeholder="Tell your story... e.g. How the Nyuku journey started."
+          />
+          <p className="text-[9px] text-white/20 italic tracking-wide">
+            ✦ Your story will appear in the 'About' section of your landing page. Keep it authentic.
+          </p>
         </div>
       </motion.div>
 

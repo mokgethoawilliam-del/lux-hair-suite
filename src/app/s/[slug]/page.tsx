@@ -22,6 +22,7 @@ export default function DynamicLandingPage({ params }: { params: Promise<{ slug:
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [brandName, setBrandName] = useState("KasiVault");
   const [businessFocus, setBusinessFocus] = useState("Hair & Beauty");
+  const [aboutUs, setAboutUs] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function DynamicLandingPage({ params }: { params: Promise<{ slug:
         else if (siteData.name) setBrandName(siteData.name);
         
         if (meta.business_focus) setBusinessFocus(meta.business_focus);
+        if (meta.about_us) setAboutUs(meta.about_us);
         
         setGalleryImages(gallery as GalleryImage[]);
       } catch (error) {
@@ -115,14 +117,23 @@ export default function DynamicLandingPage({ params }: { params: Promise<{ slug:
         </div>
       </div>
 
-      <footer id="about" className="py-12 bg-brand-obsidian border-t border-white/5">
-        <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="text-2xl font-serif font-bold tracking-tighter uppercase whitespace-nowrap">
-            {brandName.split(' ')[0]}<span className="text-brand-gold italic">{brandName.split(' ').slice(1).join(' ')}</span>
+      <footer id="about" className="py-24 bg-brand-obsidian border-t border-white/5">
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mb-16">
+            <h3 className="text-3xl font-serif text-white mb-6 uppercase tracking-[0.2em]">Our <span className="text-brand-gold italic">Story</span></h3>
+            <p className="text-lg text-white/40 leading-relaxed font-light">
+               {aboutUs || `Welcome to ${brandName}. We are dedicated to providing the highest quality products and experiences for our community.`}
+            </p>
           </div>
-          
-          <div className="text-[10px] uppercase tracking-[0.4em] text-white/20 font-bold">
-            © {new Date().getFullYear()} {brandName.toUpperCase()} • {site.name}
+
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 pt-12 border-t border-white/5">
+            <div className="text-2xl font-serif font-bold tracking-tighter uppercase whitespace-nowrap">
+              {brandName.split(' ')[0]}<span className="text-brand-gold italic">{brandName.split(' ').slice(1).join(' ')}</span>
+            </div>
+            
+            <div className="text-[10px] uppercase tracking-[0.4em] text-white/20 font-bold">
+              © {new Date().getFullYear()} {brandName.toUpperCase()} • {site.name}
+            </div>
           </div>
         </div>
       </footer>
