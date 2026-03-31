@@ -157,7 +157,7 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
               className="w-full h-full rounded-3xl overflow-hidden shadow-2xl"
             >
               <img 
-                src="https://images.unsplash.com/photo-1596178065887-1198b6148b2b?q=80&w=800&auto=format&fit=crop" 
+                src="/luxury_hair_installation_suite_1774966989604.png" 
                 alt="Expert Installation"
                 className="w-full h-full object-cover" 
               />

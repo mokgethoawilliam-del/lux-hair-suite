@@ -114,7 +114,9 @@ export default function DynamicLandingPage({ params }: { params: Promise<{ slug:
             </div>
           </section>
 
-          <AffiliateSection siteId={site.id} />
+          <div id="pro-care">
+            <AffiliateSection siteId={site.id} />
+          </div>
           <LeadMagnet siteId={site.id} />
         </div>
       </div>
