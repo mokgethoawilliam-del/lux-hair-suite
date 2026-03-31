@@ -24,6 +24,7 @@ interface Stats {
   revenue: number;
   leads: number;
   orders: number;
+  bookings: number;
   products: number;
 }
 
@@ -39,7 +40,7 @@ function LiveClock() {
 
 export default function AdminOverview() {
   const [adminName, setAdminName] = useState("Admin");
-  const [stats, setStats] = useState<Stats>({ revenue: 0, leads: 0, orders: 0, products: 0 });
+  const [stats, setStats] = useState<Stats>({ revenue: 0, leads: 0, orders: 0, bookings: 0, products: 0 });
   const [recentLeads, setRecentLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -75,7 +76,7 @@ export default function AdminOverview() {
   const statCards = [
     { label: "Total Revenue", value: `R ${stats.revenue.toLocaleString()}`, icon: TrendingUp, color: "indigo" },
     { label: "Active Leads", value: stats.leads, icon: Users, color: "sky" },
-    { label: "Bookings", value: stats.orders, icon: ShoppingBag, color: "violet" },
+    { label: "Upcoming Gigs", value: stats.bookings, icon: ShoppingBag, color: "violet" },
     { label: "Catalog Items", value: stats.products, icon: Package, color: "emerald" },
   ];
 
@@ -178,10 +179,10 @@ export default function AdminOverview() {
             <h3 className="font-bold text-white mb-4">Quick Actions</h3>
             <div className="space-y-2">
               {[
-                { label: "Respond to Leads", href: "/admin/leads", color: "indigo" },
+                { label: "Check Gig Radar", href: "/admin/calendar", color: "indigo" },
                 { label: "Add New Product", href: "/admin/inventory", color: "sky" },
-                { label: "View Orders", href: "/admin/orders", color: "violet" },
-                { label: "Edit Site Content", href: "/admin/editor", color: "emerald" },
+                { label: "Respond to Leads", href: "/admin/leads", color: "violet" },
+                { label: "Edit Site Story", href: "/admin/settings", color: "emerald" },
               ].map((action) => (
                 <Link
                   key={action.href}

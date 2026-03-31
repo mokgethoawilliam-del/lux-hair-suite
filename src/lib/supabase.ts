@@ -252,13 +252,23 @@ export async function createBooking(bookingData: {
   return data;
 }
 
+export async function fetchLeads(siteId?: string) {
+  let query = supabase.from("leads").select("*");
+  if (siteId) query = query.eq("site_id", siteId);
+  
+  const { data, error } = await query.order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
 // 4. Platform Growth Dashboard (Stats)
 export async function getPlatformStats() {
-  const [products, leads, orders, customers] = await Promise.all([
+  const [products, leads, orders, customers, bookings] = await Promise.all([
     supabase.from("products").select("id", { count: "exact", head: true }),
     supabase.from("leads").select("id", { count: "exact", head: true }),
     supabase.from("orders").select("id", { count: "exact", head: true }),
     supabase.from("customers").select("id", { count: "exact", head: true }),
+    supabase.from("bookings").select("id", { count: "exact", head: true }),
   ]);
 
   // Aggregate stats
@@ -272,6 +282,7 @@ export async function getPlatformStats() {
     products: products.count || 0,
     leads: (leads.count || 0) + (customers.count || 0),
     orders: orders.count || 0,
+    bookings: bookings.count || 0,
     revenue: revenue
   };
 }
