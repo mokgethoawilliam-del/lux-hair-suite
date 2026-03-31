@@ -6,7 +6,7 @@ import {
   User, Save, Loader2, CheckCircle2, Lock,
   Eye, EyeOff, Key, ShieldAlert, CreditCard,
 } from "lucide-react";
-import { getAppSettings, updateAppSettings } from "@/lib/supabase";
+import { getAppSettings, updateAppSettings, updateSiteMetadata } from "@/lib/supabase";
 
 export const dynamic = 'force-dynamic';
 
@@ -59,7 +59,12 @@ export default function AdminProfile() {
   const saveProfile = async () => {
     setSavingProfile(true);
     try {
+      // Save to app_settings (admin profile)
       await updateAppSettings(profile);
+      // Also sync store_name → brand_name on the landing page
+      if (profile.store_name) {
+        await updateSiteMetadata({ brand_name: profile.store_name });
+      }
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 3000);
     } catch (err) { console.error(err); alert("Failed to save profile."); }
@@ -158,7 +163,7 @@ export default function AdminProfile() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest">Store Name</label>
+            <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest">Brand / Store Name</label>
             <input
               type="text"
               value={profile.store_name}
@@ -166,6 +171,7 @@ export default function AdminProfile() {
               className="w-full px-4 py-3 bg-[#0f1117] border border-white/10 rounded-xl focus:border-indigo-500/50 outline-none transition-all text-white text-sm"
               placeholder="e.g. Glam Hair Collection"
             />
+            <p className="text-[10px] text-indigo-400/60 ml-1">✦ This updates your landing page navbar &amp; footer automatically</p>
           </div>
           <div className="space-y-2">
             <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest">WhatsApp Number</label>

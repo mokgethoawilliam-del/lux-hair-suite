@@ -193,13 +193,16 @@ export default function SiteEditor() {
               
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] uppercase tracking-widest text-white/30 font-bold ml-1">Brand Display Name</label>
-                <input 
-                  type="text"
-                  value={metadata.brand_name || ""}
-                  onChange={(e) => updateField("brand_name", e.target.value)}
-                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-brand-gold/50 outline-none transition-all"
-                  placeholder="e.g. Bolt Kicks"
-                />
+                <div className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl flex items-center justify-between gap-4">
+                  <span className="text-white font-serif text-lg">{metadata.brand_name || "Lux Hair Suite"}</span>
+                  <a
+                    href="/admin/profile"
+                    className="text-[10px] uppercase tracking-widest text-brand-gold/60 hover:text-brand-gold font-bold transition-colors whitespace-nowrap"
+                  >
+                    Edit in Profile →
+                  </a>
+                </div>
+                <p className="text-[10px] text-white/20 ml-1">Set your brand name in Profile to update it everywhere</p>
               </div>
             </div>
           </section>
