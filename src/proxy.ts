@@ -25,7 +25,11 @@ export async function proxy(request: NextRequest) {
 
   // 2. Routing Logic (Shopify Style)
   // If host is NOT the main domain or localhost, it's a tenant
-  const isMainDomain = host === MAIN_DOMAIN || host === LOCALHOST || host.endsWith(MAIN_DOMAIN);
+  const isMainDomain = 
+    host === MAIN_DOMAIN || 
+    host === LOCALHOST || 
+    host.endsWith(MAIN_DOMAIN) || 
+    host.endsWith('.vercel.app');
   
   if (!isMainDomain) {
     // Custom Domain Routing
