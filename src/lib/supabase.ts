@@ -215,7 +215,44 @@ export async function fetchOrders(siteId?: string) {
   return data;
 }
 
-// 3. Platform Growth Dashboard (Stats)
+// 3. Booking Engine
+export async function fetchBookings(siteId?: string) {
+  let query = supabase
+    .from("bookings")
+    .select(`
+      *,
+      products (name, price)
+    `);
+  
+  if (siteId) query = query.eq("site_id", siteId);
+  
+  const { data, error } = await query.order("slot_start", { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createBooking(bookingData: {
+  site_id: string;
+  service_id: string;
+  customer_name: string;
+  customer_phone?: string;
+  customer_email?: string;
+  slot_start: string;
+  slot_end: string;
+  notes?: string;
+}) {
+  const { data, error } = await supabase
+    .from("bookings")
+    .insert([bookingData])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// 4. Platform Growth Dashboard (Stats)
 export async function getPlatformStats() {
   const [products, leads, orders, customers] = await Promise.all([
     supabase.from("products").select("id", { count: "exact", head: true }),

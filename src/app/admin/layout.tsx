@@ -22,12 +22,15 @@ const THEME_MAP: Record<string, { color: string; bg: string; border: string; ico
   "Hair & Beauty": { color: "text-emerald-400", bg: "bg-emerald-500/15", border: "border-emerald-500/20", icon: "text-emerald-400", highlight: "emerald" },
   "Sneakers & Streetwear": { color: "text-amber-400", bg: "bg-amber-500/15", border: "border-amber-500/20", icon: "text-amber-400", highlight: "amber" },
   "Clothing & Apparel": { color: "text-blue-400", bg: "bg-blue-500/15", border: "border-blue-500/20", icon: "text-blue-400", highlight: "blue" },
+  "Events & Apparel": { color: "text-purple-400", bg: "bg-purple-500/15", border: "border-purple-500/20", icon: "text-purple-400", highlight: "purple" },
+  "Tailoring & Styling": { color: "text-indigo-400", bg: "bg-indigo-500/15", border: "border-indigo-500/20", icon: "text-indigo-400", highlight: "indigo" },
   "Multi-Hustle": { color: "text-purple-400", bg: "bg-purple-500/15", border: "border-purple-500/20", icon: "text-purple-400", highlight: "purple" },
 };
 
 const navItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/admin" },
   { icon: Radio, label: "Lead Radar", href: "/admin/leads" },
+  { icon: PenSquare, label: "Gig Radar", href: "/admin/calendar" },
   { icon: Package, label: "Inventory", href: "/admin/inventory" },
   { icon: ShoppingBag, label: "Orders & Sales", href: "/admin/orders" },
   { icon: ImageIcon, label: "Gallery", href: "/admin/gallery" },

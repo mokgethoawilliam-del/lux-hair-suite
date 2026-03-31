@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Loader2, MessageCircle, ShoppingCart } from "lucide-react";
+import { Loader2, MessageCircle, ShoppingCart, Calendar as CalendarIcon } from "lucide-react";
 import { getSiteMetadata, supabase } from "@/lib/supabase";
+import BookingCalendar from "./BookingCalendar";
 
 interface Service {
   id: string;
@@ -19,6 +20,9 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
   const [services, setServices] = useState<Service[]>([]);
   const [whatsapp, setWhatsapp] = useState("27123456789");
   const [isLoading, setIsLoading] = useState(true);
+  
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -53,9 +57,9 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
     window.open(`https://wa.me/${whatsapp}?text=Hi, I'm interested in the ${name}.`, "_blank");
   };
 
-  const handleBuyNow = (id: string) => {
-    // Navigate to checkout with product id
-    window.location.href = `/checkout?product=${id}`;
+  const handleBuyNow = (service: Service) => {
+    setSelectedService(service);
+    setIsCalendarOpen(true);
   };
 
   return (
@@ -120,11 +124,11 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
                           Inquiry
                         </button>
                         <button 
-                          onClick={() => handleBuyNow(cat.id)}
+                          onClick={() => handleBuyNow(cat)}
                           className="py-3 bg-brand-gold text-brand-obsidian flex items-center justify-center gap-2 rounded-full transition-all duration-300 font-bold text-xs shadow-lg shadow-brand-gold/10"
                         >
                           <ShoppingCart className="w-4 h-4" />
-                          Buy Now
+                          Book Now
                         </button>
                       </div>
                     </div>
@@ -133,8 +137,14 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
               )}
             </div>
             
-            <button className="mt-10 px-10 py-4 bg-brand-gold text-brand-obsidian font-bold rounded-full hover:scale-105 transition-transform">
-              Book Your Appointment
+            <button 
+              onClick={() => {
+                if (services.length > 0) handleBuyNow(services[0]);
+              }}
+              className="mt-10 px-10 py-4 bg-brand-gold text-brand-obsidian font-bold rounded-full hover:scale-105 transition-transform flex items-center gap-2"
+            >
+              <CalendarIcon className="w-4 h-4" />
+              Book Appointment
             </button>
           </div>
           
@@ -159,6 +169,17 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
           </div>
         </div>
       </div>
+
+      {selectedService && (
+        <BookingCalendar 
+          siteId={siteId || ""}
+          serviceId={selectedService.id}
+          serviceName={selectedService.name}
+          servicePrice={selectedService.price}
+          isOpen={isCalendarOpen}
+          onClose={() => setIsCalendarOpen(false)}
+        />
+      )}
     </section>
   );
 }

@@ -40,7 +40,12 @@ export default function Navbar({ siteId }: { siteId?: string }) {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-10">
-          {["Collections", businessFocus === "Hair & Beauty" ? "Installations" : "Events", "Pro-Care", "Gallery", "About"].map((item) => (
+          {[
+            "Collections", 
+            businessFocus === "Hair & Beauty" ? "Installations" : 
+            businessFocus === "Tailoring & Styling" ? "Bespoke" : "Events", 
+            "Pro-Care", "Gallery", "About"
+          ].map((item) => (
             <Link 
               key={item} 
               href={`#${item.toLowerCase()}`}
@@ -81,7 +86,12 @@ export default function Navbar({ siteId }: { siteId?: string }) {
             className="md:hidden bg-brand-obsidian border-t border-white/10 overflow-hidden"
           >
             <div className="flex flex-col p-6 gap-6">
-              {["Collections", businessFocus === "Hair & Beauty" ? "Installations" : "Events", "Pro-Care", "Gallery"].map((item) => (
+              {[
+                "Collections", 
+                businessFocus === "Hair & Beauty" ? "Installations" : 
+                businessFocus === "Tailoring & Styling" ? "Bespoke" : "Events", 
+                "Pro-Care", "Gallery"
+              ].map((item) => (
                 <Link 
                   key={item} 
                   href={`#${item.toLowerCase()}`}

@@ -103,6 +103,7 @@ export default function AdminSettings() {
             { name: "Sneakers & Streetwear", icon: "👟", bg: "bg-amber-500/10", border: "border-amber-500/20" },
             { name: "Clothing & Apparel", icon: "👕", bg: "bg-blue-500/10", border: "border-blue-500/20" },
             { name: "Events & Apparel", icon: "🎟️", bg: "bg-purple-500/10", border: "border-purple-500/20" },
+            { name: "Tailoring & Styling", icon: "✂️", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
           ].map((opt) => (
             <button
               key={opt.name}

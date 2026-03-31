@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import CategoryGrid from "@/components/CategoryGrid";
 import InstallationSuite from "@/components/InstallationSuite";
+import TailoringSuite from "@/components/TailoringSuite";
 import EventsSuite from "@/components/EventsSuite";
 import AffiliateSection from "@/components/AffiliateSection";
 import LeadMagnet from "@/components/LeadMagnet";
@@ -82,6 +83,7 @@ export default function DynamicLandingPage({ params }: { params: Promise<{ slug:
           <CategoryGrid siteId={site.id} />
           
           {businessFocus === "Hair & Beauty" && <InstallationSuite siteId={site.id} />}
+          {businessFocus === "Tailoring & Styling" && <TailoringSuite siteId={site.id} />}
           {businessFocus === "Events & Apparel" && <EventsSuite siteId={site.id} />}
           
           {/* Gallery Section */}
