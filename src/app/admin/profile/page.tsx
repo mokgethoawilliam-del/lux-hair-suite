@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Save, Loader2, CheckCircle2, Lock,
   Eye, EyeOff, Key, ShieldAlert, CreditCard,
+  Globe, ExternalLink,
 } from "lucide-react";
 import { getAppSettings, updateAppSettings, updateSiteMetadata } from "@/lib/supabase";
 
@@ -19,11 +20,13 @@ const AVATAR_COLORS = [
 
 export default function AdminProfile() {
   // Profile state
-  const [profile, setProfile] = useState({
+    const [profile, setProfile] = useState({
     admin_name: "",
     store_name: "",
     whatsapp_number: "",
     avatar_color: "#6366f1",
+    business_focus: "Hair & Beauty",
+    custom_domain: "",
   });
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -46,6 +49,8 @@ export default function AdminProfile() {
           store_name: s.store_name || "",
           whatsapp_number: s.whatsapp_number || "",
           avatar_color: s.avatar_color || "#6366f1",
+          business_focus: s.business_focus || "Hair & Beauty",
+          custom_domain: s.custom_domain || "",
         });
         setPayVault({
           paystack_public_key: s.paystack_public_key || "",
@@ -101,6 +106,13 @@ export default function AdminProfile() {
     </div>
   );
 
+  const FOCUS_OPTIONS = [
+    { name: "Hair & Beauty", icon: "✨", color: "text-emerald-400", bg: "bg-emerald-500/10" },
+    { name: "Sneakers & Streetwear", icon: "👟", color: "text-amber-400", bg: "bg-amber-500/10" },
+    { name: "Clothing & Apparel", icon: "👕", color: "text-blue-400", bg: "bg-blue-500/10" },
+    { name: "Multi-Hustle", icon: "🚀", color: "text-purple-400", bg: "bg-purple-500/10" },
+  ];
+
   return (
     <div className="space-y-10 max-w-2xl">
       {/* Header */}
@@ -142,7 +154,7 @@ export default function AdminProfile() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl space-y-6"
+        className="p-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl space-y-8"
       >
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
@@ -193,6 +205,69 @@ export default function AdminProfile() {
           {savingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : profileSaved ? <CheckCircle2 className="w-4 h-4 text-green-300" /> : <Save className="w-4 h-4" />}
           {profileSaved ? "Profile Saved!" : "Save Profile"}
         </button>
+      </motion.div>
+      {/* Store Address & Custom Domain */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl space-y-8"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-purple-500/10 rounded-xl border border-purple-500/20">
+            <Globe className="w-5 h-5 text-purple-400" />
+          </div>
+          <h3 className="font-bold text-white">Store Address</h3>
+        </div>
+
+        <div className="space-y-6">
+          {/* Subdomain Display */}
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest">Permanent Address</label>
+            <div className="flex items-center gap-3 p-4 bg-[#0f1117] border border-white/10 rounded-xl group hover:border-purple-500/30 transition-all">
+               <code className="text-sm text-purple-400/80 flex-1 truncate">
+                 {profile.store_name.toLowerCase().replace(/\s+/g, '-') || "brand"}.kasivault.com
+               </code>
+               <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-bold text-green-400/60 uppercase tracking-widest px-2 py-0.5 bg-green-400/10 rounded border border-green-400/20">Live</span>
+                  <button className="p-1 hover:text-white transition-colors text-white/20"><ExternalLink className="w-3.5 h-3.5" /></button>
+               </div>
+            </div>
+            <p className="text-[9px] text-white/20 italic tracking-wide">
+              ✦ This is your official KasiVault subdomain. It is managed automatically.
+            </p>
+          </div>
+
+          {/* Custom Domain Input */}
+          <div className="space-y-4 pt-4 border-t border-white/5">
+            <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest">Connect Professional Domain</label>
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={profile.custom_domain}
+                onChange={(e) => setProfile({ ...profile, custom_domain: e.target.value })}
+                className="flex-1 px-4 py-3 bg-[#0f1117] border border-white/10 rounded-xl focus:border-purple-500/50 outline-none transition-all text-white text-sm"
+                placeholder="e.g. www.glamhair.co.za"
+              />
+              <button 
+                onClick={saveProfile}
+                className="px-6 py-3 bg-purple-500 text-white font-bold rounded-xl text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-purple-500/20"
+              >
+                {savingProfile ? "..." : "Connect"}
+              </button>
+            </div>
+            
+            <div className="p-4 bg-purple-500/5 border border-purple-500/10 rounded-xl">
+               <p className="text-[10px] text-purple-400/60 flex items-center gap-2 mb-2 font-bold uppercase tracking-widest">
+                 <CheckCircle2 className="w-3 h-3" /> CNAME Verification
+               </p>
+               <p className="text-[10px] text-white/30 leading-relaxed">
+                 To link your professional domain, point a **CNAME record** at your DNS provider (GoDaddy, etc.) to:
+                 <br />
+                 <code className="bg-black/40 px-1 py-0.5 rounded text-purple-400 mt-1 inline-block">cname.kasivault.com</code>
+               </p>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
       {/* Payment Vault — PIN Protected */}

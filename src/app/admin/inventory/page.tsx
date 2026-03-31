@@ -14,6 +14,8 @@ interface Product {
   is_in_stock: boolean;
   description?: string;
   affiliate_link?: string;
+  sizes?: string[];
+  stock_count?: number;
 }
 
 export default function InventoryManager() {
@@ -21,27 +23,46 @@ export default function InventoryManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [businessFocus, setBusinessFocus] = useState("Hair & Beauty");
 
-  const loadInventory = async () => {
+  const loadData = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { getAppSettings } = await import("@/lib/supabase");
+      const [invData, settings] = await Promise.all([
+        supabase.from("products").select("*").order("created_at", { ascending: false }),
+        getAppSettings()
+      ]);
       
-      if (error) throw error;
-      setInventory((data as Product[]) || []);
+      if (invData.error) throw invData.error;
+      setInventory((invData.data as Product[]) || []);
+      setBusinessFocus(settings.business_focus || "Hair & Beauty");
+      
+      // Default category based on focus
+      if (settings.business_focus === "Sneakers & Streetwear") {
+        setNewProduct(prev => ({ ...prev, category: "Sneakers" }));
+      } else if (settings.business_focus === "Clothing & Apparel") {
+        setNewProduct(prev => ({ ...prev, category: "Clothing" }));
+      }
     } catch (err) {
-      console.error("Error loading inventory:", err);
+      console.error("Error loading data:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadInventory();
+    loadData();
   }, []);
+
+  const themeColors: Record<string, { text: string; bg: string; button: string; border: string; highlight: string }> = {
+    "Hair & Beauty": { text: "text-emerald-500", bg: "bg-emerald-500", button: "bg-emerald-500", border: "border-emerald-500/20", highlight: "emerald" },
+    "Sneakers & Streetwear": { text: "text-amber-500", bg: "bg-amber-500", button: "bg-amber-500", border: "border-amber-500/20", highlight: "amber" },
+    "Clothing & Apparel": { text: "text-blue-500", bg: "bg-blue-500", button: "bg-blue-500", border: "border-blue-500/20", highlight: "blue" },
+    "Multi-Hustle": { text: "text-purple-500", bg: "bg-purple-500", button: "bg-purple-500", border: "border-purple-500/20", highlight: "purple" },
+  };
+
+  const theme = themeColors[businessFocus] || themeColors["Hair & Beauty"];
 
   const toggleStatus = async (id: string, currentStatus: boolean) => {
     try {
@@ -71,7 +92,17 @@ export default function InventoryManager() {
   };
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: "", category: "Frontal", price: 0, image_url: "", type: "In-Stock", description: "", affiliate_link: "" });
+  const [newProduct, setNewProduct] = useState({ 
+    name: "", 
+    category: "Frontal", 
+    price: 0, 
+    image_url: "", 
+    type: "In-Stock", 
+    description: "", 
+    affiliate_link: "",
+    sizes: "", // Will be converted to array
+    stock_count: 0
+  });
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const handleAddProduct = async (e: React.FormEvent) => {
@@ -80,28 +111,44 @@ export default function InventoryManager() {
     try {
       let finalImageUrl = newProduct.image_url;
 
-      // 1. Upload Image if exists
       if (imageFile) {
         const { uploadImage } = await import("@/lib/supabase");
         finalImageUrl = await uploadImage(imageFile);
       }
 
-      // 2. Insert Product
+      // Prepare payload
+      const payload = {
+        ...newProduct,
+        image_url: finalImageUrl,
+        sizes: newProduct.sizes.split(",").map(s => s.trim()).filter(s => s !== ""),
+        stock_count: Number(newProduct.stock_count)
+      };
+
       const { data, error } = await supabase
         .from("products")
-        .insert([{ ...newProduct, image_url: finalImageUrl }])
+        .insert([payload])
         .select()
         .single();
       
       if (error) throw error;
       setInventory([data as Product, ...inventory]);
       setIsAddModalOpen(false);
-      setNewProduct({ name: "", category: "Frontal", price: 0, image_url: "", type: "In-Stock", description: "", affiliate_link: "" });
+      setNewProduct({ 
+        name: "", 
+        category: businessFocus === "Sneakers & Streetwear" ? "Sneakers" : businessFocus === "Clothing & Apparel" ? "Clothing" : "Frontal", 
+        price: 0, 
+        image_url: "", 
+        type: "In-Stock", 
+        description: "", 
+        affiliate_link: "",
+        sizes: "",
+        stock_count: 0
+      });
       setImageFile(null);
     } catch (err: unknown) {
       const error = err as Error;
       console.error("Full Error:", error);
-      alert(`Error adding item: ${error.message || 'Check your permissions or Supabase connection.'}`);
+      alert(`Error adding item: ${error.message || 'Check your permissions.'}`);
     } finally {
       setIsSaving(false);
     }
@@ -112,19 +159,19 @@ export default function InventoryManager() {
     item.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (isLoading) return <div className="p-20 text-center"><Loader2 className="animate-spin text-brand-gold mx-auto" /></div>;
+  if (isLoading) return <div className="p-20 text-center"><Loader2 className={`animate-spin ${theme.text} mx-auto`} /></div>;
 
   return (
     <div className="space-y-12 relative">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-serif mb-2 text-white">Inventory <span className="text-brand-gold italic">Vault</span></h1>
-          <p className="text-white/30 text-sm font-medium tracking-widest uppercase">DIRECT STOCK CONTROL</p>
+          <h1 className="text-4xl font-serif mb-2 text-white">Inventory <span className={`${theme.text} italic`}>Vault</span></h1>
+          <p className="text-white/30 text-sm font-medium tracking-widest uppercase">DIRECT STOCK CONTROL · {businessFocus.toUpperCase()}</p>
         </div>
         
         <button 
           onClick={() => setIsAddModalOpen(true)}
-          className="px-8 py-4 bg-brand-gold text-brand-obsidian font-bold rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-lg shadow-brand-gold/20"
+          className={`px-8 py-4 ${theme.button} text-brand-obsidian font-bold rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-lg shadow-${theme.highlight}-500/20`}
         >
           <Plus className="w-5 h-5" />
           Add New Product
@@ -135,7 +182,7 @@ export default function InventoryManager() {
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 sm:p-24 bg-brand-obsidian/90 backdrop-blur-sm">
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white/5 border border-white/5 p-12 rounded-[40px] w-full max-w-2xl max-h-full overflow-auto space-y-8 shadow-2xl">
-            <h2 className="text-3xl font-serif text-white">Add <span className="text-brand-gold italic">New Item</span></h2>
+            <h2 className="text-3xl font-serif text-white">Add <span className={`${theme.text} italic`}>New Item</span></h2>
             <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div className="space-y-2">
                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Product Name</label>
@@ -143,7 +190,7 @@ export default function InventoryManager() {
                   required
                   value={newProduct.name}
                   onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-brand-gold/50 outline-none text-white" 
+                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
                  />
                </div>
                <div className="space-y-2">
@@ -151,13 +198,19 @@ export default function InventoryManager() {
                  <select 
                   value={newProduct.category}
                   onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
-                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-brand-gold/50 outline-none text-white"
+                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white"
                  >
-                    <option value="Frontal">Frontal</option>
-                    <option value="Weave">Weave</option>
-                    <option value="Ponytail">Ponytail</option>
-                    <option value="Service">Service (Installation)</option>
-                    <option value="Pro-Care">Pro-Care</option>
+                    <optgroup label="Hair & Beauty">
+                      <option value="Frontal">Frontal</option>
+                      <option value="Weave">Weave</option>
+                      <option value="Ponytail">Ponytail</option>
+                      <option value="Service">Service (Installation)</option>
+                    </optgroup>
+                    <optgroup label="Sneakers & Clothing">
+                      <option value="Sneakers">Sneakers (Direct Stock)</option>
+                      <option value="Clothing">Clothing / Apparel</option>
+                    </optgroup>
+                    <option value="Pro-Care">Pro-Care / Accessories</option>
                  </select>
                </div>
                <div className="space-y-2">
@@ -167,7 +220,7 @@ export default function InventoryManager() {
                   required
                   value={newProduct.price}
                   onChange={(e) => setNewProduct({...newProduct, price: parseInt(e.target.value)})}
-                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-brand-gold/50 outline-none text-white" 
+                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
                  />
                </div>
                <div className="space-y-2">
@@ -179,20 +232,45 @@ export default function InventoryManager() {
                     onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                    />
-                   <div className="w-full px-6 py-4 bg-brand-obsidian border border-dashed border-white/10 rounded-2xl group-hover/upload:border-brand-gold/50 transition-all text-center">
-                      <span className="text-xs text-white/40 group-hover/upload:text-brand-gold transition-colors">
+                   <div className="w-full px-6 py-4 bg-brand-obsidian border border-dashed border-white/10 rounded-2xl group-hover/upload:border-amber-500/50 transition-all text-center">
+                      <span className="text-xs text-white/40 group-hover/upload:text-amber-500 transition-colors">
                         {imageFile ? imageFile.name : 'Click to Upload Product Image'}
                       </span>
                    </div>
                  </div>
                </div>
+
+               {/* Multi-Vertical Fields */}
+               {(newProduct.category === "Sneakers" || newProduct.category === "Clothing") && (
+                 <>
+                   <div className="space-y-2">
+                     <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Sizes (Comma separated)</label>
+                     <input 
+                      value={newProduct.sizes}
+                      onChange={(e) => setNewProduct({...newProduct, sizes: e.target.value})}
+                      className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
+                      placeholder="UK7, UK8, UK9..."
+                     />
+                   </div>
+                   <div className="space-y-2">
+                     <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Stock Quantity</label>
+                     <input 
+                      type="number"
+                      value={newProduct.stock_count}
+                      onChange={(e) => setNewProduct({...newProduct, stock_count: parseInt(e.target.value)})}
+                      className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
+                     />
+                   </div>
+                 </>
+               )}
+
                <div className="col-span-full space-y-2">
                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Description</label>
                  <textarea 
                   rows={2}
                   value={newProduct.description}
                   onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
-                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-brand-gold/50 outline-none text-white resize-none" 
+                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white resize-none" 
                  />
                </div>
                
@@ -202,7 +280,7 @@ export default function InventoryManager() {
                    <input 
                     value={newProduct.affiliate_link}
                     onChange={(e) => setNewProduct({...newProduct, affiliate_link: e.target.value})}
-                    className="w-full px-6 py-4 bg-brand-obsidian border border-brand-gold/20 rounded-2xl focus:border-brand-gold/50 outline-none text-white italic" 
+                    className="w-full px-6 py-4 bg-brand-obsidian border border-amber-500/20 rounded-2xl focus:border-amber-500/50 outline-none text-white italic" 
                     placeholder="https://www.takealot.com/..."
                    />
                  </div>
@@ -210,7 +288,7 @@ export default function InventoryManager() {
 
                <div className="col-span-full flex gap-4 pt-6">
                   <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 border border-white/10 rounded-2xl text-white/40 font-bold uppercase tracking-widest text-xs hover:bg-white/5">Cancel</button>
-                  <button type="submit" disabled={isSaving} className="flex-2 py-4 bg-brand-gold text-brand-obsidian rounded-2xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-brand-gold/20 flex items-center justify-center gap-2">
+                  <button type="submit" disabled={isSaving} className="flex-2 py-4 bg-amber-500 text-brand-obsidian rounded-2xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
                     {isSaving ? <Loader2 className="animate-spin w-4 h-4" /> : 'Add to Inventory'}
                   </button>
                </div>
@@ -232,20 +310,21 @@ export default function InventoryManager() {
               className="bg-transparent text-sm w-full outline-none placeholder:text-white/20 text-white" 
             />
           </div>
-          <div className="px-6 py-3 bg-brand-obsidian border border-white/10 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-brand-gold/30 transition-all">
+          <div className="px-6 py-3 bg-brand-obsidian border border-white/10 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-amber-500/30 transition-all">
             <ArrowUpDown className="w-4 h-4 text-white/30" />
             <span className="text-sm">Sort By: Newest</span>
           </div>
         </div>
 
-        <div className="w-full">
-          <table className="w-full text-left">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-left min-w-[1000px]">
             <thead>
               <tr className="bg-brand-obsidian/50 text-[10px] uppercase tracking-widest text-white/30 font-bold">
                 <th className="px-10 py-6">Product Item</th>
                 <th className="px-10 py-6">Category</th>
                 <th className="px-10 py-6">Price</th>
-                <th className="px-10 py-6 text-center">Status Toggle</th>
+                <th className="px-10 py-6">Stock / Sizes</th>
+                <th className="px-10 py-6 text-center">Status</th>
                 <th className="px-10 py-6 text-right">Actions</th>
               </tr>
             </thead>
@@ -259,20 +338,44 @@ export default function InventoryManager() {
                            <img src={item.image_url} alt="" className="w-full h-full object-cover" />
                         </div>
                       ) : (
-                        <div className="w-12 h-12 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center font-serif text-brand-gold">
-                          {item.name.charAt(0)}
+                        <div className="w-12 h-12 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center font-serif text-amber-500">
+                           {item.name.charAt(0)}
                         </div>
                       )}
-                      <span className="font-serif text-lg">{item.name}</span>
+                      <div>
+                        <span className="font-serif text-lg block">{item.name}</span>
+                        {item.stock_count !== undefined && (
+                          <span className={`text-[9px] uppercase font-bold tracking-widest ${item.stock_count < 5 ? 'text-red-400' : 'text-white/20'}`}>
+                            {item.stock_count} units left
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
-                  <td className="px-10 py-8 text-white/50 text-sm font-bold uppercase tracking-widest">{item.category}</td>
-                  <td className="px-10 py-8 font-bold text-brand-gold">R {item.price}</td>
+                  <td className="px-10 py-8">
+                    <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border ${
+                      item.category === 'Sneakers' ? 'border-amber-500/20 text-amber-500 bg-amber-500/5' :
+                      item.category === 'Clothing' ? 'border-blue-500/20 text-blue-500 bg-blue-500/5' :
+                      'border-white/10 text-white/40'
+                    }`}>
+                      {item.category}
+                    </span>
+                  </td>
+                  <td className="px-10 py-8 font-bold text-amber-500">R {item.price}</td>
+                  <td className="px-10 py-8">
+                    <div className="flex flex-wrap gap-1 max-w-[200px]">
+                      {item.sizes?.map(size => (
+                        <span key={size} className="text-[9px] font-bold bg-white/5 border border-white/10 px-2 py-0.5 rounded text-white/40 uppercase">
+                          {size}
+                        </span>
+                      )) || <span className="text-white/10 text-[9px] uppercase tracking-widest">N/A</span>}
+                    </div>
+                  </td>
                   <td className="px-10 py-8">
                      <div className="flex justify-center">
                        <button 
                          onClick={() => toggleStatus(item.id, item.is_in_stock)}
-                         className={`relative w-14 h-7 rounded-full transition-all duration-300 ${item.is_in_stock ? "bg-brand-gold" : "bg-white/10"}`}
+                         className={`relative w-14 h-7 rounded-full transition-all duration-300 ${item.is_in_stock ? "bg-amber-500" : "bg-white/10"}`}
                        >
                          <div className={`absolute top-1 w-5 h-5 rounded-full bg-brand-obsidian transition-all duration-300 ${item.is_in_stock ? "left-8" : "left-1"}`} />
                        </button>

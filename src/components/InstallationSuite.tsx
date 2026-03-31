@@ -15,7 +15,7 @@ interface Service {
   is_in_stock: boolean;
 }
 
-export default function InstallationSuite() {
+export default function InstallationSuite({ siteId }: { siteId?: string }) {
   const [services, setServices] = useState<Service[]>([]);
   const [whatsapp, setWhatsapp] = useState("27123456789");
   const [isLoading, setIsLoading] = useState(true);
@@ -24,17 +24,21 @@ export default function InstallationSuite() {
     async function load() {
       try {
         // 1. Fetch Services
-        const { data, error } = await supabase
+        let query = supabase
           .from("products")
           .select("*")
           .eq("category", "Service")
           .eq("is_in_stock", true);
         
+        if (siteId) query = query.eq("site_id", siteId);
+        
+        const { data, error } = await query;
+        
         if (error) throw error;
         setServices((data as Service[]) || []);
 
         // 2. Fetch WhatsApp
-        const metadata = await getSiteMetadata();
+        const metadata = await getSiteMetadata(siteId);
         if (metadata.whatsapp_number) setWhatsapp(metadata.whatsapp_number);
       } catch (err) {
         console.error(err);
@@ -43,7 +47,7 @@ export default function InstallationSuite() {
       }
     }
     load();
-  }, []);
+  }, [siteId]);
 
   const handleWhatsAppInquiry = (name: string) => {
     window.open(`https://wa.me/${whatsapp}?text=Hi, I'm interested in the ${name}.`, "_blank");

@@ -16,7 +16,7 @@ interface ProCareProduct {
   is_in_stock: boolean;
 }
 
-export default function AffiliateSection() {
+export default function AffiliateSection({ siteId }: { siteId?: string }) {
   const [products, setProducts] = useState<ProCareProduct[]>([]);
   const [brandName, setBrandName] = useState("LUX HAIR");
   const [isLoading, setIsLoading] = useState(true);
@@ -24,8 +24,12 @@ export default function AffiliateSection() {
   useEffect(() => {
     async function load() {
       try {
-        const { data } = await supabase.from("products").select("*").eq("category", "Pro-Care").eq("is_in_stock", true);
-        const metadata = await getSiteMetadata();
+        let query = supabase.from("products").select("*").eq("category", "Pro-Care").eq("is_in_stock", true);
+        if (siteId) query = query.eq("site_id", siteId);
+        
+        const { data } = await query;
+        const metadata = await getSiteMetadata(siteId);
+        
         if (data) setProducts(data as ProCareProduct[]);
         if (metadata.brand_name) setBrandName(metadata.brand_name);
       } catch (err) {
@@ -35,7 +39,7 @@ export default function AffiliateSection() {
       }
     }
     load();
-  }, []);
+  }, [siteId]);
 
   if (isLoading && products.length === 0) return null;
   if (!isLoading && products.length === 0) return null; // Hide if empty

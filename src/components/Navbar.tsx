@@ -6,10 +6,11 @@ import { Menu, X, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { getSiteMetadata } from "@/lib/supabase";
 
-export default function Navbar() {
+export default function Navbar({ siteId }: { siteId?: string }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [brandName, setBrandName] = useState("LUX HAIR");
+  const [businessFocus, setBusinessFocus] = useState("Hair & Beauty");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,13 +19,14 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
 
     async function load() {
-      const metadata = await getSiteMetadata();
+      const metadata = await getSiteMetadata(siteId);
       if (metadata?.brand_name) setBrandName(metadata.brand_name);
+      if (metadata?.business_focus) setBusinessFocus(metadata.business_focus);
     }
     load();
 
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [siteId]);
 
   return (
     <nav 
@@ -38,7 +40,7 @@ export default function Navbar() {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-10">
-          {["Collections", "Installations", "Pro-Care", "Gallery", "About"].map((item) => (
+          {["Collections", businessFocus === "Hair & Beauty" ? "Installations" : "Events", "Pro-Care", "Gallery", "About"].map((item) => (
             <Link 
               key={item} 
               href={`#${item.toLowerCase()}`}
@@ -79,7 +81,7 @@ export default function Navbar() {
             className="md:hidden bg-brand-obsidian border-t border-white/10 overflow-hidden"
           >
             <div className="flex flex-col p-6 gap-6">
-              {["Collections", "Installations", "Pro-Care", "Gallery"].map((item) => (
+              {["Collections", businessFocus === "Hair & Beauty" ? "Installations" : "Events", "Pro-Care", "Gallery"].map((item) => (
                 <Link 
                   key={item} 
                   href={`#${item.toLowerCase()}`}

@@ -5,8 +5,19 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
+export async function getSiteBySlug(slug: string) {
+  const { data, error } = await supabase
+    .from("sites")
+    .select("*")
+    .eq("subdomain_slug", slug)
+    .single();
+  
+  if (error) return null;
+  return data;
+}
+
 // Helper for Lead capture
-export async function captureLead(leadData: { name: string; whatsapp_number: string; source: string }) {
+export async function captureLead(leadData: { name: string; whatsapp_number: string; source: string; site_id?: string }) {
   const { data, error } = await supabase
     .from("leads")
     .insert([leadData])
@@ -17,11 +28,11 @@ export async function captureLead(leadData: { name: string; whatsapp_number: str
 }
 
 // Helper to fetch Site Metadata (for Live CMS)
-export async function getSiteMetadata() {
-  const { data, error } = await supabase
-    .from("site_metadata")
-    .select("*");
+export async function getSiteMetadata(siteId?: string) {
+  let query = supabase.from("site_metadata").select("*");
+  if (siteId) query = query.eq("site_id", siteId);
   
+  const { data, error } = await query;
   if (error) return {};
   
   return data.reduce((acc: Record<string, string>, item: { key: string; value: string }) => {
@@ -31,41 +42,40 @@ export async function getSiteMetadata() {
 }
 
 // Helper to update Site Metadata
-export async function updateSiteMetadata(metadata: Record<string, string>) {
+export async function updateSiteMetadata(metadata: Record<string, string>, siteId?: string) {
   const updates = Object.entries(metadata).map(([key, value]) => ({
     key,
     value,
+    site_id: siteId,
     updated_at: new Date().toISOString(),
   }));
 
   const { data, error } = await supabase
     .from("site_metadata")
-    .upsert(updates, { onConflict: "key" })
+    .upsert(updates, { onConflict: "key,site_id" })
     .select();
 
   if (error) throw error;
   return data;
 }
 
-// Helper to fetch Leads
-export async function fetchLeads() {
+export async function updateSiteDomain(domain: string, siteId: string) {
   const { data, error } = await supabase
-    .from("leads")
-    .select("*")
-    .order("timestamp", { ascending: false });
+    .from("sites")
+    .update({ custom_domain: domain, updated_at: new Date().toISOString() })
+    .eq("id", siteId)
+    .select();
 
   if (error) throw error;
   return data;
 }
 
 // Helper for Gallery/Products
-export async function fetchGalleryImages() {
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("category", "Gallery")
-    .order("created_at", { ascending: false });
-
+export async function fetchGalleryImages(siteId?: string) {
+  let query = supabase.from("products").select("*").eq("category", "Gallery");
+  if (siteId) query = query.eq("site_id", siteId);
+  
+  const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw error;
   return data;
 }
@@ -157,12 +167,13 @@ export async function createOrder(orderData: {
 }
 
 // 2. Settings Management
-export async function getAppSettings() {
-  const { data, error } = await supabase
-    .from("app_settings")
-    .select("*");
+export async function getAppSettings(siteId?: string) {
+  let query = supabase.from("app_settings").select("*");
+  if (siteId) query = query.eq("site_id", siteId);
   
-  if (error) throw error;
+  const { data, error } = await query;
+  
+  if (error) return {};
 
   return data.reduce((acc: Record<string, string>, item: { key: string; value: string }) => {
     acc[item.key] = item.value;
@@ -170,31 +181,35 @@ export async function getAppSettings() {
   }, {});
 }
 
-export async function updateAppSettings(settings: Record<string, string>) {
+export async function updateAppSettings(settings: Record<string, string>, siteId?: string) {
   const updates = Object.entries(settings).map(([key, value]) => ({
     key,
     value,
+    site_id: siteId,
     updated_at: new Date().toISOString(),
   }));
 
   const { data, error } = await supabase
     .from("app_settings")
-    .upsert(updates, { onConflict: "key" })
+    .upsert(updates, { onConflict: "key,site_id" })
     .select();
 
   if (error) throw error;
   return data;
 }
 
-export async function fetchOrders() {
-  const { data, error } = await supabase
+export async function fetchOrders(siteId?: string) {
+  let query = supabase
     .from("orders")
     .select(`
       *,
       customers (full_name, whatsapp_number, email),
       products (name)
-    `)
-    .order("created_at", { ascending: false });
+    `);
+  
+  if (siteId) query = query.eq("site_id", siteId);
+  
+  const { data, error } = await query.order("created_at", { ascending: false });
 
   if (error) throw error;
   return data;

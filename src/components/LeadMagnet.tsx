@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Check, Loader2, Send } from "lucide-react";
 import { captureLead } from "@/lib/supabase";
 
-export default function LeadMagnet() {
+export default function LeadMagnet({ siteId }: { siteId?: string }) {
   const [formData, setFormData] = useState({ name: "", whatsapp: "" });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
@@ -18,6 +18,7 @@ export default function LeadMagnet() {
         name: formData.name,
         whatsapp_number: formData.whatsapp,
         source: "Footer",
+        site_id: siteId,
       });
       setStatus("success");
       setFormData({ name: "", whatsapp: "" });

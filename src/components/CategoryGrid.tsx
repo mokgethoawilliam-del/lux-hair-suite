@@ -16,7 +16,7 @@ interface HairProduct {
   is_in_stock: boolean;
 }
 
-export default function CategoryGrid() {
+export default function CategoryGrid({ siteId }: { siteId?: string }) {
   const [products, setProducts] = useState<HairProduct[]>([]);
   const [whatsapp, setWhatsapp] = useState("27123456789");
   const [isLoading, setIsLoading] = useState(true);
@@ -25,19 +25,23 @@ export default function CategoryGrid() {
   useEffect(() => {
     async function load() {
       try {
-        // 1. Fetch Hair Products (not services)
-        const { data, error } = await supabase
+        // 1. Fetch Products for this site
+        let query = supabase
           .from("products")
           .select("*")
           .neq("category", "Service")
           .eq("is_in_stock", true)
           .limit(6);
         
+        if (siteId) query = query.eq("site_id", siteId);
+        
+        const { data, error } = await query;
+        
         if (error) throw error;
         setProducts((data as HairProduct[]) || []);
 
         // 2. Fetch WhatsApp
-        const metadata = await getSiteMetadata();
+        const metadata = await getSiteMetadata(siteId);
         if (metadata.whatsapp_number) setWhatsapp(metadata.whatsapp_number);
       } catch (err) {
         console.error(err);
@@ -46,7 +50,7 @@ export default function CategoryGrid() {
       }
     }
     load();
-  }, []);
+  }, [siteId]);
 
   const handleWhatsAppInquiry = (productName: string) => {
     const message = encodeURIComponent(`Hi, I'm interested in the ${productName}...`);

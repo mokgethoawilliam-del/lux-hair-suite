@@ -5,14 +5,14 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { getSiteMetadata } from "@/lib/supabase";
 
-export default function Hero() {
+export default function Hero({ siteId }: { siteId?: string }) {
   const [content, setContent] = useState({
     hero_headline: "Premium Hair Redefined.",
     hero_description: "Experience the ultimate in high-performance Frontals, Ponytails, and Weaves. Professional installations for the modern woman who demands excellence."
   });
   useEffect(() => {
     async function load() {
-      const metadata = await getSiteMetadata();
+      const metadata = await getSiteMetadata(siteId);
       if (metadata.hero_headline) {
         setContent({
           hero_headline: metadata.hero_headline,
@@ -21,7 +21,7 @@ export default function Hero() {
       }
     }
     load();
-  }, []);
+  }, [siteId]);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-brand-obsidian">

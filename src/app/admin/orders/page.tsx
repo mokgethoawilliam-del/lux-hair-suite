@@ -13,43 +13,71 @@ interface Order {
   created_at: string;
   products?: { name: string };
   customers?: { full_name: string; whatsapp_number: string; email: string };
+  shipping_street?: string;
+  shipping_city?: string;
+  shipping_province?: string;
+  shipping_postal_code?: string;
+  delivery_status?: string;
 }
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [appSettings, setAppSettings] = useState<any>(null);
 
-  const loadOrders = async () => {
+  const loadData = async () => {
     setIsLoading(true);
     try {
-      const data = await fetchOrders();
-      setOrders(data as Order[]);
+      const [orderData, settings] = await Promise.all([
+        fetchOrders(),
+        import("@/lib/supabase").then(m => m.getAppSettings())
+      ]);
+      setOrders(orderData as Order[]);
+      setAppSettings(settings);
     } catch (err) {
-      console.error("Error fetching orders:", err);
+      console.error("Error fetching data:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadOrders();
+    loadData();
   }, []);
 
-  if (isLoading) return <div className="p-20 text-center"><Loader2 className="animate-spin text-brand-gold mx-auto" /></div>;
+  const handleDownloadSlip = async (order: Order) => {
+    const { generatePackingSlip } = await import("@/lib/pdf");
+    
+    generatePackingSlip({
+      orderId: order.id,
+      customerName: order.customers?.full_name || "N/A",
+      customerEmail: order.customers?.email || "N/A",
+      customerPhone: order.customers?.whatsapp_number || "N/A",
+      shippingAddress: `${order.shipping_street || 'No Address Provided'}, ${order.shipping_city || ''}, ${order.shipping_province || ''}, ${order.shipping_postal_code || ''}`,
+      productName: order.products?.name || "Product",
+      amount: order.amount,
+      date: new Date(order.created_at).toLocaleDateString(),
+      storeName: appSettings?.store_name || "Store",
+      adminName: appSettings?.admin_name || "Admin",
+      saasName: "KasiVault SaaS"
+    });
+  };
+
+  if (isLoading) return <div className="p-20 text-center"><Loader2 className="animate-spin text-amber-500 mx-auto" /></div>;
 
   return (
     <div className="space-y-12">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-serif mb-2 text-white">Order <span className="text-brand-gold italic">History</span></h1>
-          <p className="text-white/30 text-sm font-medium tracking-widest uppercase">SALES & CUSTOMER LEADS</p>
+          <h1 className="text-4xl font-serif mb-2 text-white">Order <span className="text-amber-500 italic">Vault</span></h1>
+          <p className="text-white/30 text-sm font-medium tracking-widest uppercase">SALES & DELIVERY TRACKING · KASIVAULT</p>
         </div>
         
         <button 
-          onClick={loadOrders}
+          onClick={loadData}
           className="px-6 py-4 bg-white/5 border border-white/10 text-white rounded-2xl flex items-center gap-2 hover:bg-white/10 transition-all font-bold"
         >
-          <RefreshCw className="w-5 h-5 text-brand-gold" />
+          <RefreshCw className="w-5 h-5 text-amber-500" />
           Refresh Orders
         </button>
       </div>
@@ -66,11 +94,11 @@ export default function AdminOrders() {
               key={order.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="group bg-white/5 border border-white/5 rounded-[32px] p-8 hover:border-brand-gold/20 transition-all grid grid-cols-1 md:grid-cols-4 gap-8 items-center"
+              className="group bg-white/5 border border-white/5 rounded-[32px] p-8 hover:border-amber-500/20 transition-all grid grid-cols-1 lg:grid-cols-4 gap-8 items-start"
             >
               <div className="flex items-center gap-6">
-                <div className="p-4 bg-brand-emerald/20 rounded-2xl group-hover:bg-brand-gold/20 transition-all">
-                  <ShoppingBag className="w-6 h-6 text-brand-gold" />
+                <div className="p-4 bg-amber-500/10 rounded-2xl group-hover:bg-amber-500/20 transition-all">
+                  <ShoppingBag className="w-6 h-6 text-amber-500" />
                 </div>
                 <div>
                    <h4 className="font-serif text-lg text-white">{order.products?.name}</h4>
@@ -78,36 +106,57 @@ export default function AdminOrders() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/5 rounded-xl">
-                  <User className="w-4 h-4 text-white/20" />
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-white/5 rounded-xl">
+                    <User className="w-4 h-4 text-white/20" />
+                  </div>
+                  <div>
+                     <h5 className="text-sm font-medium text-white/80">{order.customers?.full_name}</h5>
+                     <p className="text-[10px] text-white/40 font-bold uppercase">{order.customers?.whatsapp_number}</p>
+                  </div>
                 </div>
-                <div>
-                   <h5 className="text-sm font-medium text-white/80">{order.customers?.full_name}</h5>
-                   <p className="text-[10px] text-white/40 font-bold uppercase">{order.customers?.whatsapp_number}</p>
+                {order.shipping_street && (
+                  <div className="pl-[52px]">
+                    <p className="text-[10px] text-white/30 leading-relaxed max-w-[200px]">
+                      {order.shipping_street}, {order.shipping_city}, {order.shipping_province} {order.shipping_postal_code}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-white/5 rounded-xl">
+                    <CreditCard className="w-4 h-4 text-white/20" />
+                  </div>
+                  <div>
+                     <span className={`px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest ${order.status === 'Paid' ? 'bg-amber-500 text-brand-obsidian' : 'bg-white/10 text-white/40'}`}>
+                        {order.status}
+                     </span>
+                     <p className="text-[10px] text-white/20 mt-1 font-mono">{order.payment_reference}</p>
+                  </div>
+                </div>
+                <div className="pl-[52px]">
+                  <p className="text-[9px] uppercase tracking-widest font-bold text-amber-500/60">
+                    Delivery: <span className="text-white/40">{order.delivery_status || 'Pending'}</span>
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/5 rounded-xl">
-                  <CreditCard className="w-4 h-4 text-white/20" />
-                </div>
-                <div>
-                   <span className={`px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest ${order.status === 'Paid' ? 'bg-brand-gold text-brand-obsidian' : 'bg-white/10 text-white/40'}`}>
-                      {order.status}
-                   </span>
-                   <p className="text-[10px] text-white/20 mt-1 font-mono">{order.payment_reference}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-6">
+              <div className="flex flex-col items-end gap-6 h-full justify-between">
                  <div className="text-right">
                     <p className="text-xs text-white/30 uppercase tracking-widest font-bold">Processed</p>
                     <p className="text-xs text-white/50">{new Date(order.created_at).toLocaleDateString()}</p>
                  </div>
-                 <button className="px-6 py-3 bg-brand-gold/10 hover:bg-brand-gold text-brand-gold hover:text-brand-obsidian rounded-xl transition-all text-[10px] font-bold uppercase tracking-widest">
-                    View Details
-                 </button>
+                 <div className="flex gap-2">
+                   <button 
+                     onClick={() => handleDownloadSlip(order)}
+                     className="px-6 py-3 bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-brand-obsidian rounded-xl transition-all text-[10px] font-bold uppercase tracking-widest flex items-center gap-2"
+                   >
+                      Packing Slip
+                   </button>
+                 </div>
               </div>
             </motion.div>
           ))

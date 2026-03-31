@@ -15,7 +15,15 @@ interface AdminProfile {
   admin_name: string;
   store_name: string;
   avatar_color: string;
+  business_focus: string;
 }
+
+const THEME_MAP: Record<string, { color: string; bg: string; border: string; icon: string; highlight: string }> = {
+  "Hair & Beauty": { color: "text-emerald-400", bg: "bg-emerald-500/15", border: "border-emerald-500/20", icon: "text-emerald-400", highlight: "emerald" },
+  "Sneakers & Streetwear": { color: "text-amber-400", bg: "bg-amber-500/15", border: "border-amber-500/20", icon: "text-amber-400", highlight: "amber" },
+  "Clothing & Apparel": { color: "text-blue-400", bg: "bg-blue-500/15", border: "border-blue-500/20", icon: "text-blue-400", highlight: "blue" },
+  "Multi-Hustle": { color: "text-purple-400", bg: "bg-purple-500/15", border: "border-purple-500/20", icon: "text-purple-400", highlight: "purple" },
+};
 
 const navItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/admin" },
@@ -56,6 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     admin_name: "Admin",
     store_name: "My Store",
     avatar_color: "#6366f1",
+    business_focus: "Hair & Beauty",
   });
 
   const loadProfile = useCallback(async () => {
@@ -65,11 +74,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         admin_name: s.admin_name || "Admin",
         store_name: s.store_name || "My Store",
         avatar_color: s.avatar_color || "#6366f1",
+        business_focus: s.business_focus || "Hair & Beauty",
       });
     } catch { /* silently fail */ }
   }, []);
 
-  useEffect(() => { loadProfile(); }, [loadProfile]);
+  useEffect(() => { loadProfile(); }, [loadProfile, pathname]);
+
+  const theme = THEME_MAP[profile.business_focus] || THEME_MAP["Hair & Beauty"];
 
   const initials = profile.admin_name
     .split(" ")
@@ -84,7 +96,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="w-[260px] flex-shrink-0 flex flex-col border-r border-white/[0.06] sticky top-0 h-screen overflow-y-auto">
         {/* Brand */}
         <div className="px-6 pt-8 pb-6 border-b border-white/[0.06]">
-          <p className="text-[9px] uppercase tracking-[0.3em] text-indigo-400/50 font-bold mb-1">Admin Portal</p>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="p-2 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg shadow-lg shadow-amber-500/20">
+               <img src="/kasivault-logo.png" alt="KasiVault" className="w-5 h-5 object-contain invert" />
+            </div>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-amber-500 font-bold">KasiVault SaaS</p>
+          </div>
           <p className="text-lg font-bold text-white truncate">{profile.store_name}</p>
         </div>
 
@@ -103,13 +120,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 href={href}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${
                   active
-                    ? "bg-indigo-500/15 text-white border border-indigo-500/20"
+                    ? `${theme.bg} text-white border ${theme.border}`
                     : "text-white/40 hover:text-white hover:bg-white/[0.04] border border-transparent"
                 }`}
               >
-                <Icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-indigo-400" : "group-hover:text-indigo-400"} transition-colors`} />
+                <Icon className={`w-4 h-4 flex-shrink-0 ${active ? theme.color : "group-hover:" + theme.color} transition-colors`} />
                 <span className="text-sm font-medium">{label}</span>
-                {active && <ChevronRight className="w-3 h-3 text-indigo-400 ml-auto" />}
+                {active && <ChevronRight className={`w-3 h-3 ${theme.color} ml-auto`} />}
               </Link>
             );
           })}
@@ -129,7 +146,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/profile">
             <motion.div
               whileHover={{ scale: 1.01 }}
-              className="flex items-center gap-3 px-4 py-3 bg-white/[0.03] hover:bg-indigo-500/10 border border-white/[0.06] hover:border-indigo-500/20 rounded-xl cursor-pointer transition-all group"
+              className={`flex items-center gap-3 px-4 py-3 bg-white/[0.03] hover:${theme.bg} border border-white/[0.06] hover:${theme.border} rounded-xl cursor-pointer transition-all group`}
             >
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
@@ -139,9 +156,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-bold text-white truncate">{profile.admin_name}</p>
-                <p className="text-[9px] text-indigo-400/60 uppercase tracking-widest font-bold">Admin · Profile</p>
+                <p className={`text-[9px] ${theme.color.replace('text-', 'text-opacity-60 text-')} uppercase tracking-widest font-bold`}>{profile.business_focus}</p>
               </div>
-              <User className="w-3 h-3 text-white/20 group-hover:text-indigo-400 ml-auto transition-colors" />
+              <User className={`w-3 h-3 text-white/20 group-hover:${theme.color} ml-auto transition-colors`} />
             </motion.div>
           </Link>
         </div>
