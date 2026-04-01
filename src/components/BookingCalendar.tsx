@@ -23,7 +23,6 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [calLink, setCalLink] = useState("");
-  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   
   const [customer, setCustomer] = useState({
     name: "",
@@ -31,7 +30,9 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
     email: "",
     notes: ""
   });
-  const slots = ["09:00", "11:00", "13:00", "15:00", "17:00"];
+  const [existingBookings, setExistingBookings] = useState<any[]>([]);
+  const [isOccupied, setIsOccupied] = useState(false);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -50,18 +51,38 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
 
   useEffect(() => {
     if (!selectedDate) return;
-    // 3. Fetch taken slots for this date (Custom Calendar Stability)
-    supabase.from("bookings").select("slot_start")
+    
+    setCheckingAvailability(true);
+    // 3. Fetch ALL bookings for this date to check ranges
+    supabase.from("bookings").select("slot_start, slot_end")
       .eq("site_id", siteId)
       .gte("slot_start", `${selectedDate}T00:00:00`)
       .lte("slot_start", `${selectedDate}T23:59:59`)
       .then(({ data }) => {
-        if (data) {
-          const times = data.map(b => new Date(b.slot_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-          setBookedSlots(times);
-        }
+        setExistingBookings(data || []);
+        setCheckingAvailability(false);
       });
   }, [selectedDate, siteId]);
+
+  useEffect(() => {
+    if (!selectedDate || !selectedTime || existingBookings.length === 0) {
+      setIsOccupied(false);
+      return;
+    }
+
+    // 4. Industrial Range Collision Check
+    const newStart = new Date(`${selectedDate}T${selectedTime}:00`);
+    const newEnd = new Date(newStart.getTime() + serviceDuration * 60 * 60 * 1000);
+
+    const collision = existingBookings.some(b => {
+      const bStart = new Date(b.slot_start);
+      const bEnd = new Date(b.slot_end);
+      // Range Intersection: (StartA < EndB) && (EndA > StartB)
+      return (newStart < bEnd) && (newEnd > bStart);
+    });
+
+    setIsOccupied(collision);
+  }, [selectedTime, selectedDate, existingBookings, serviceDuration]);
 
   const handleBook = async () => {
     if (!selectedDate || !selectedTime) return alert("Please select a valid date and time.");
@@ -185,45 +206,35 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
                        />
                     </div>
 
-                    <div className="space-y-3">
-                      <label className="text-[10px] uppercase font-bold text-white/20 tracking-wider">Pick Your Hour</label>
-                      {calLink ? (
-                        <div className="p-8 border border-emerald-500/20 bg-emerald-500/5 rounded-[32px] text-center space-y-4">
-                           <p className="text-[10px] uppercase font-bold text-emerald-500 tracking-widest">Power Scheduler Activated</p>
-                           <h3 className="text-xl font-serif text-white italic">Gmail Sync Ready</h3>
-                           <Cal 
-                             calLink={calLink} 
-                             style={{ width: "100%", height: "450px", overflow: "scroll" }}
-                             config={{ layout: "month_view", theme: "dark" }}
-                           />
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-3 gap-2">
-                           {slots.map(s => (
-                              <button
-                                key={s}
-                                type="button"
-                                disabled={bookedSlots.includes(s)}
-                                onClick={() => setSelectedTime(s)}
-                                className={`h-11 rounded-xl text-xs font-bold transition-all border ${selectedTime === s ? "bg-brand-gold/10 border-brand-gold text-brand-gold shadow-lg" : bookedSlots.includes(s) ? "bg-white/[0.01] border-white/5 text-white/10 cursor-not-allowed line-through" : "bg-white/[0.02] border-white/5 text-white/40 hover:border-white/20"}`}
-                              >
-                                {s} {bookedSlots.includes(s) && "(Taken)"}
-                              </button>
-                           ))}
+                     <div className="space-y-3">
+                      <label className="text-[10px] uppercase font-bold text-white/20 tracking-wider">Choose Any Time (Minute Perfect)</label>
+                      <div className="relative group">
+                        <input 
+                          type="time"
+                          value={selectedTime}
+                          onChange={(e) => setSelectedTime(e.target.value)}
+                          className={`w-full h-16 px-8 bg-white/[0.03] border rounded-[24px] outline-none transition-all text-xl font-serif italic ${isOccupied ? "border-red-500/50 text-red-400 bg-red-500/5" : "border-white/10 text-white focus:border-brand-gold group-hover:border-white/20"}`}
+                        />
+                        <Clock className={`absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 ${isOccupied ? "text-red-500" : "text-white/10 group-hover:text-white/30"}`} />
+                      </div>
+
+                      {/* Live Availability Feedback */}
+                      {selectedTime && (
+                        <div className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest ${isOccupied ? "text-red-400 bg-red-400/10" : "text-emerald-400 bg-emerald-400/10"}`}>
+                           <div className={`w-2 h-2 rounded-full animate-pulse ${isOccupied ? "bg-red-500" : "bg-emerald-500"}`} />
+                           {isOccupied ? "Occupied: Window Overlaps" : "Slot Clear: Ready for Booking"}
                         </div>
                       )}
                     </div>
-                 </div>
+                  </div>
 
-                 {!calLink && (
-                   <button
-                     disabled={!selectedDate || !selectedTime}
-                     onClick={() => setStep(2)}
-                     className="w-full h-16 bg-brand-gold text-brand-obsidian font-bold rounded-[24px] shadow-xl shadow-brand-gold/10 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-30 flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
-                   >
-                     Confirm Slot <ChevronRight className="w-4 h-4" />
-                   </button>
-                 )}
+                  <button
+                    disabled={!selectedDate || !selectedTime || isOccupied || checkingAvailability}
+                    onClick={() => setStep(2)}
+                    className="w-full h-16 bg-brand-gold text-brand-obsidian font-bold rounded-[24px] shadow-xl shadow-brand-gold/10 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-30 flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+                  >
+                    {checkingAvailability ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Confirm Selection <ChevronRight className="w-4 h-4" /></>}
+                  </button>
                </motion.div>
              ) : (
                <motion.div 
