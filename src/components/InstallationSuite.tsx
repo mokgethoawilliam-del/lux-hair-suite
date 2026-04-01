@@ -10,10 +10,12 @@ interface Service {
   id: string;
   name: string;
   price: number;
+  original_price?: number;
   image_url?: string;
   description?: string;
   category: string;
   is_in_stock: boolean;
+  stock_count?: number;
 }
 
 export default function InstallationSuite({ siteId }: { siteId?: string }) {
@@ -97,6 +99,11 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
                     {/* Image Aspect Ratio Box */}
                     <div className="relative aspect-[4/5] overflow-hidden">
                       <div className="absolute inset-0 bg-brand-emerald/20 group-hover:bg-transparent transition-all duration-500 z-10" />
+                      {cat.original_price && cat.original_price > cat.price && (
+                        <div className="absolute top-4 left-4 z-30 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg">
+                          {Math.round(((cat.original_price - cat.price) / cat.original_price) * 100)}% OFF
+                        </div>
+                      )}
                       <img 
                         src={cat.image_url || ""} 
                         alt={cat.name}
@@ -106,9 +113,16 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
 
                     {/* Content */}
                     <div className="p-8 relative z-20">
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-brand-gold mb-2 block font-semibold">
-                        R {cat.price}
-                      </span>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-xl uppercase tracking-tighter text-white font-serif">
+                          R {cat.price}
+                        </span>
+                        {cat.original_price && cat.original_price > cat.price && (
+                          <span className="text-xs text-white/30 line-through decoration-red-500/50">
+                            R {cat.original_price}
+                          </span>
+                        )}
+                      </div>
                       <h3 className="text-2xl font-serif mb-2 text-white">
                         {cat.name}
                       </h3>

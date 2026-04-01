@@ -10,10 +10,14 @@ interface HairProduct {
   id: string;
   name: string;
   price: number;
+  original_price?: number;
   image_url?: string;
   description?: string;
   category: string;
   is_in_stock: boolean;
+  stock_count?: number;
+  sizes?: string[];
+  colors?: string[];
 }
 
 export default function CategoryGrid({ siteId }: { siteId?: string }) {
@@ -100,6 +104,16 @@ export default function CategoryGrid({ siteId }: { siteId?: string }) {
                 {/* Image Aspect Ratio Box */}
                 <div className="relative aspect-[4/5] overflow-hidden">
                   <div className="absolute inset-0 bg-brand-emerald/20 group-hover:bg-transparent transition-all duration-500 z-10" />
+                  {product.original_price && product.original_price > product.price && (
+                    <div className="absolute top-4 left-4 z-30 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg">
+                      {Math.round(((product.original_price - product.price) / product.original_price) * 100)}% OFF
+                    </div>
+                  )}
+                  {product.stock_count !== undefined && product.stock_count > 0 && product.stock_count < 5 && (
+                    <div className="absolute top-4 right-4 z-30 bg-amber-500 text-brand-obsidian text-[10px] font-bold px-3 py-1 rounded-full shadow-lg">
+                      ONLY {product.stock_count} LEFT
+                    </div>
+                  )}
                   <img 
                     src={product.image_url || "/placeholder.jpg"} 
                     alt={product.name}
@@ -109,12 +123,44 @@ export default function CategoryGrid({ siteId }: { siteId?: string }) {
 
                 {/* Content */}
                 <div className="p-8 relative z-20">
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-brand-gold mb-2 block font-semibold">
-                    R {product.price}
-                  </span>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-xl uppercase tracking-tighter text-white font-serif">
+                      R {product.price}
+                    </span>
+                    {product.original_price && product.original_price > product.price && (
+                      <span className="text-xs text-white/30 line-through decoration-red-500/50">
+                        R {product.original_price}
+                      </span>
+                    )}
+                  </div>
                   <h3 className="text-2xl font-serif mb-2 text-white">
                     {product.name}
                   </h3>
+                  
+                  {/* Variants Preview */}
+                  {((product.sizes?.length || 0) > 0 || (product.colors?.length || 0) > 0) && (
+                    <div className="flex flex-col gap-2 mb-4">
+                       {/* Sizes */}
+                       {(product.sizes?.length || 0) > 0 && (
+                         <div className="flex flex-wrap gap-1">
+                            {product.sizes?.slice(0, 3).map(s => (
+                              <span key={s} className="text-[8px] font-bold px-1.5 py-0.5 rounded border border-white/10 text-white/30 uppercase">{s}</span>
+                            ))}
+                            {(product.sizes?.length || 0) > 3 && <span className="text-[8px] text-white/20">+{product.sizes!.length - 3}</span>}
+                         </div>
+                       )}
+                       {/* Colors */}
+                       {(product.colors?.length || 0) > 0 && (
+                         <div className="flex flex-wrap gap-1">
+                            {product.colors?.slice(0, 5).map(c => (
+                              <div key={c} className="w-2 h-2 rounded-full bg-white/20 border border-white/5" title={c} />
+                            ))}
+                            {(product.colors?.length || 0) > 5 && <span className="text-[8px] text-white/20">+{product.colors!.length - 5}</span>}
+                         </div>
+                       )}
+                    </div>
+                  )}
+
                   <p className="text-white/40 text-sm mb-6 leading-relaxed line-clamp-2">
                     {product.description}
                   </p>
