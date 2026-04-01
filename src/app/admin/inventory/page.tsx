@@ -359,7 +359,7 @@ export default function InventoryManager() {
         stock_count: Number(newProduct.stock_count),
         is_new: newProduct.is_new,
         caption: newProduct.caption,
-        duration_hours: newProduct.category === "Service" ? Number(newProduct.duration_hours) : 0
+        duration_hours: ["Service", "Frontal", "Weave", "Ponytail"].includes(newProduct.category) ? Number(newProduct.duration_hours) : 0
       };
 
       const { data, error } = await supabase
@@ -408,7 +408,7 @@ export default function InventoryManager() {
         colors: Array.isArray(editingProduct.colors) ? editingProduct.colors : [],
         is_new: editingProduct.is_new,
         caption: editingProduct.caption,
-        duration_hours: editingProduct.category === "Service" ? Number(editingProduct.duration_hours) : 0
+        duration_hours: ["Service", "Frontal", "Weave", "Ponytail"].includes(editingProduct.category) ? Number(editingProduct.duration_hours) : 0
       };
 
       const { data, error } = await supabase
@@ -609,7 +609,7 @@ export default function InventoryManager() {
                       {newProduct.is_new ? 'Active: NEW IN' : 'Standard Collection'}
                     </button>
                   </div>
-                  {newProduct.category === "Service" && (
+                  {["Service", "Frontal", "Weave", "Ponytail"].includes(newProduct.category) && (
                      <div className="space-y-2">
                         <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Estimated Time (Hours)</label>
                         <input 
@@ -923,7 +923,7 @@ export default function InventoryManager() {
                       {editingProduct.is_new ? 'ACTIVE: NEW IN' : 'STANDARD STOCK'}
                     </button>
                   </div>
-                  {editingProduct.category === "Service" && (
+                  {["Service", "Frontal", "Weave", "Ponytail"].includes(editingProduct.category) && (
                      <div className="space-y-2">
                         <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Service Time (Hours)</label>
                         <input 

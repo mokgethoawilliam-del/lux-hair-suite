@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar as CalendarIcon, Clock, CheckCircle2, Loader2, X, ChevronRight, ArrowLeft } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, CheckCircle2, Loader2, X, ChevronRight, ArrowLeft, AlertCircle } from "lucide-react";
 import { createBooking, supabase, getSiteMetadata } from "@/lib/supabase";
 import Cal, { getCalApi } from "@calcom/embed-react";
 
@@ -170,9 +170,23 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
            </button>
 
            {(!siteId || siteId === "") && (
-              <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
-                 <Loader2 className="w-8 h-8 animate-spin text-brand-gold" />
-                 <p className="text-white/40 text-xs uppercase tracking-widest">Initializing Secure Connection...</p>
+              <div className="h-full flex flex-col items-center justify-center text-center space-y-6 p-8">
+                 <div className="relative">
+                    <Loader2 className="w-12 h-12 animate-spin text-brand-gold/20" />
+                    <AlertCircle className="absolute inset-0 m-auto w-6 h-6 text-brand-gold animate-pulse" />
+                 </div>
+                 <div className="space-y-2">
+                    <p className="text-white text-lg font-serif italic">Initializing Secure Vault...</p>
+                    <p className="text-white/40 text-[10px] uppercase tracking-widest max-w-[200px] leading-relaxed">
+                       We are securely connecting to the Lux Hair database. If this persists, please refresh the page.
+                    </p>
+                 </div>
+                 <button 
+                    onClick={() => window.location.reload()}
+                    className="px-6 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] uppercase font-bold tracking-widest hover:bg-white/10 transition-all"
+                 >
+                    Manual Refresh
+                 </button>
               </div>
            )}
 

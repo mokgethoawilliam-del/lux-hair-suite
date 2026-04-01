@@ -59,29 +59,35 @@ export default function CategoryGrid({ siteId }: { siteId?: string }) {
   useEffect(() => {
     async function load() {
       try {
-        // 1. Fetch Products for this site
+        // 1. Definite siteId Recovery (Self-Healing)
+        let activeSiteId = siteId;
+        if (!activeSiteId) {
+          const meta = await getSiteMetadata();
+          if (meta?.id) activeSiteId = meta.id;
+        }
+
+        // 2. Fetch Inventory (Everything EXCEPT Services/Gallery)
         let query = supabase
           .from("products")
           .select("*")
-          .neq("category", "Service")
+          .neq("type", "Service") // Filter out professional services
           .neq("category", "Gallery")
           .order("is_new", { ascending: false })
           .order("is_in_stock", { ascending: false })
           .order("created_at", { ascending: false })
           .limit(12);
         
-        if (siteId) query = query.eq("site_id", siteId);
+        if (activeSiteId) query = query.eq("site_id", activeSiteId);
         
         const { data, error } = await query;
-        
         if (error) throw error;
         setProducts((data as HairProduct[]) || []);
 
-        // 2. Fetch WhatsApp
-        const metadata = await getSiteMetadata(siteId);
+        // 3. Fetch WhatsApp
+        const metadata = await getSiteMetadata(activeSiteId);
         if (metadata.whatsapp_number) setWhatsapp(metadata.whatsapp_number);
       } catch (err) {
-        console.error(err);
+        console.error("CategoryGrid Recovery Error:", err);
       } finally {
         setIsLoading(false);
       }

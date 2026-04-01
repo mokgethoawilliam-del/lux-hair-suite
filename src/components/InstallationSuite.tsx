@@ -30,26 +30,32 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
   useEffect(() => {
     async function load() {
       try {
-        // 1. Fetch Services
+        // 1. Definite siteId Recovery (Self-Healing)
+        let activeSiteId = siteId;
+        if (!activeSiteId) {
+           const meta = await getSiteMetadata();
+           if (meta?.id) activeSiteId = meta.id;
+        }
+
+        // 2. Fetch Services (By Type for absolute reliability)
         let query = supabase
           .from("products")
           .select("*")
-          .eq("category", "Service")
+          .eq("type", "Service") // Type is robust across all sub-categories
           .order("is_in_stock", { ascending: false })
           .order("created_at", { ascending: false });
         
-        if (siteId) query = query.eq("site_id", siteId);
+        if (activeSiteId) query = query.eq("site_id", activeSiteId);
         
         const { data, error } = await query;
-        
         if (error) throw error;
         setServices((data as Service[]) || []);
 
-        // 2. Fetch WhatsApp
-        const metadata = await getSiteMetadata(siteId);
-        if (metadata.whatsapp_number) setWhatsapp(metadata.whatsapp_number);
+        // 3. Fetch WhatsApp
+        const metadata = await getSiteMetadata(activeSiteId);
+        if (metadata?.whatsapp_number) setWhatsapp(metadata.whatsapp_number);
       } catch (err) {
-        console.error(err);
+        console.error("InstallationSuite Recovery Error:", err);
       } finally {
         setIsLoading(false);
       }
