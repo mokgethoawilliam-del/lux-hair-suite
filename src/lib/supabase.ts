@@ -179,7 +179,7 @@ export async function getAdminSite() {
   }
 }
 
-// 2.2 Definitive Site Resolver for Storefront
+// 2.2 Definitive Site Resolver for Hub & Storefront
 export async function resolveSiteId() {
   try {
     if (typeof window === "undefined") return null;
@@ -187,10 +187,20 @@ export async function resolveSiteId() {
     const host = window.location.hostname;
     let slug = "";
     
+    // 1. Check for Admin Console Identity (Definitive Hub Identification)
+    if (host.includes("lux-hair-suite.vercel.app") || host.includes("kasi-business-hub")) {
+       const { data: mainSite } = await supabase
+        .from("sites")
+        .select("id")
+        .eq("subdomain_slug", "lux-hair-suite")
+        .single();
+       if (mainSite) return mainSite.id;
+    }
+
+    // 2. Resolve via Hostname/Subdomain
     if (host.includes(".vercel.app")) {
       slug = host.split(".")[0];
     } else if (host === "localhost" || host === "127.0.0.1") {
-      // In local dev, we default to the primary site.
       const { data: firstSite } = await supabase.from("sites").select("id").limit(1).single();
       return firstSite?.id;
     } else {
@@ -214,15 +224,15 @@ export async function resolveSiteId() {
       if (site) return site.id;
     }
     
-    // Industrial Resilience: Definitive Fallback for this deployment
-    const { data: mainSite } = await supabase
+    // Industrial Resilience: Definitive Master Fallback
+    const { data: fallbackSite } = await supabase
       .from("sites")
       .select("id")
       .eq("subdomain_slug", "lux-hair-suite")
       .single();
-    if (mainSite) return mainSite.id;
+    if (fallbackSite) return fallbackSite.id;
     
-    // Final Fallback: First available site
+    // Final Legacy Fallback
     const { data: finalSite } = await supabase
        .from("sites")
        .select("id")

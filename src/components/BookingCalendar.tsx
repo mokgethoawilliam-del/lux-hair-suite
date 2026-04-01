@@ -24,6 +24,8 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
   const [success, setSuccess] = useState(false);
   const [calLink, setCalLink] = useState("");
   
+  const [paystackKey, setPaystackKey] = useState("");
+  
   const [customer, setCustomer] = useState({
     name: "",
     phone: "",
@@ -37,9 +39,10 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
   useEffect(() => {
     if (!isOpen) return;
 
-    // 1. Fetch Professional Scheduler link
+    // 1. Fetch Professional Scheduler link & Paystack Key
     getSiteMetadata(siteId).then(meta => {
       if (meta.cal_link) setCalLink(meta.cal_link);
+      if (meta.paystack_public_key) setPaystackKey(meta.paystack_public_key);
     });
 
     // 2. Setup Cal.com UI theme
@@ -84,7 +87,7 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
     setIsOccupied(collision);
   }, [selectedTime, selectedDate, existingBookings, serviceDuration]);
 
-  const handleBook = async () => {
+  const handleBook = async (status: 'Pending' | 'Confirmed' = 'Pending') => {
     if (!selectedDate || !selectedTime) return alert("Please select a valid date and time.");
     if (!siteId || siteId === "") {
        console.error("Booking Logic Error: siteId is missing or empty string.");
@@ -101,7 +104,7 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
       const start = new Date(`${selectedDate}T${selectedTime}:00`);
       const end = new Date(start.getTime() + serviceDuration * 60 * 60 * 1000); // Dynamic Duration
 
-      const { error } = await supabase
+      const { data: booking, error } = await supabase
         .from("bookings")
         .insert([{
           site_id: siteId,
@@ -112,10 +115,19 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
           slot_start: start.toISOString(),
           slot_end: end.toISOString(),
           notes: customer.notes,
-          status: 'Pending'
-        }]);
+          status: status
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Industrial: Trigger Automated Notification Hub
+      await fetch("/api/notify", {
+        method: "POST",
+        body: JSON.stringify({ bookingId: booking.id })
+      });
+
       setSuccess(true);
     } catch (err: any) {
       console.error("Booking Error Detail:", err);
@@ -123,6 +135,16 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
     } finally {
       setLoading(false);
     }
+  };
+
+  const paystackConfig = {
+    reference: (new Date()).getTime().toString(),
+    email: customer.email || "bookings@kagiso.hair",
+    amount: (servicePrice / 2) * 100, // 50% in kobo
+    publicKey: paystackKey,
+    text: "Pay 50% Deposit",
+    onSuccess: () => handleBook('Confirmed'),
+    onClose: () => alert("Transaction Cancelled - Deposit required to secure slot.")
   };
 
   if (!isOpen) return null;
@@ -309,11 +331,52 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
 
                  <button
                    disabled={!customer.name || !customer.phone || loading}
-                   onClick={handleBook}
+                   onClick={() => setStep(3)}
                    className="w-full h-16 bg-brand-gold text-brand-obsidian font-bold rounded-[24px] shadow-xl shadow-brand-gold/10 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-30 flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
                  >
-                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Secure My Gig"}
+                   Proceed to Deposit <ChevronRight className="w-4 h-4" />
                  </button>
+               </motion.div>
+             ) : (
+                <motion.div 
+                  key="step3"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-8 text-center"
+               >
+                  <div className="w-20 h-20 bg-brand-gold/10 border border-brand-gold/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                     <AlertCircle className="w-10 h-10 text-brand-gold animate-pulse" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-serif text-white mb-2 italic">Deposit Required</h2>
+                    <p className="text-white/40 text-sm max-w-xs mx-auto mb-8">
+                       To secure your session for <strong>{serviceName}</strong>, a non-refundable 50% deposit of <strong>R {(servicePrice / 2).toFixed(2)}</strong> is required.
+                    </p>
+                  </div>
+
+                  <div className="p-6 bg-white/[0.03] border border-white/5 rounded-3xl mb-8">
+                     <div className="flex justify-between text-[10px] uppercase font-bold tracking-widest text-white/30 mb-2">
+                        <span>Service Total</span>
+                        <span>R {servicePrice.toFixed(2)}</span>
+                     </div>
+                     <div className="flex justify-between text-sm font-bold text-white mb-4">
+                        <span>50% Commitment</span>
+                        <span className="text-brand-gold">R {(servicePrice / 2).toFixed(2)}</span>
+                     </div>
+                     <div className="h-px w-full bg-white/5 mb-4" />
+                     <p className="text-[9px] text-white/20 italic">Remaining balance payable on the day of service.</p>
+                  </div>
+
+                  <div className="space-y-3">
+                     <PaystackButton 
+                        {...paystackConfig}
+                        className="w-full h-16 bg-brand-gold text-brand-obsidian font-bold rounded-[24px] shadow-xl shadow-brand-gold/20 hover:scale-[1.05] transition-all uppercase tracking-widest text-xs"
+                     />
+                     <button onClick={() => setStep(2)} className="text-[10px] text-white/20 uppercase tracking-widest hover:text-white transition-all">
+                        Change Details
+                     </button>
+                  </div>
                </motion.div>
              )}
            </AnimatePresence>
@@ -322,3 +385,7 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
     </div>
   );
 }
+
+// Support Component for Paystack (Dynamic Import)
+import dynamic from 'next/dynamic';
+const PaystackButton = dynamic(() => import('react-paystack').then(mod => mod.PaystackButton), { ssr: false });
