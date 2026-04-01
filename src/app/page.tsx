@@ -53,11 +53,9 @@ export default function Home() {
           
           <CategoryGrid />
           
-          {(businessFocus === "Hair & Beauty" || businessFocus === "Multi-Hustle") && (
-            <div id="installations">
-              <InstallationSuite />
-            </div>
-          )}
+          <div id="installations">
+            <InstallationSuite />
+          </div>
           
           <div id="pro-care">
             <AffiliateSection />
