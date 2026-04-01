@@ -85,6 +85,11 @@ export default function DynamicLandingPage({ params }: { params: Promise<{ slug:
           {businessFocus === "Hair & Beauty" && <InstallationSuite siteId={site.id} />}
           {businessFocus === "Tailoring & Styling" && <TailoringSuite siteId={site.id} />}
           {businessFocus === "Events & Apparel" && <EventsSuite siteId={site.id} />}
+          {businessFocus === "Multi-Hustle" && (
+            <div className="space-y-24">
+               <InstallationSuite siteId={site.id} />
+            </div>
+          )}
           
           {/* Gallery Section */}
           <section id="gallery" className="py-24 bg-brand-obsidian overflow-hidden">

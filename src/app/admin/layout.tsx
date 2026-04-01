@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard, Radio, Package, ShoppingBag,
   Image as ImageIcon, PenSquare, Settings, ExternalLink,
-  User, ChevronRight,
+  User, ChevronRight, Shield,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -24,7 +24,7 @@ const THEME_MAP: Record<string, { color: string; bg: string; border: string; ico
   "Clothing & Apparel": { color: "text-blue-400", bg: "bg-blue-500/15", border: "border-blue-500/20", icon: "text-blue-400", highlight: "blue" },
   "Events & Apparel": { color: "text-purple-400", bg: "bg-purple-500/15", border: "border-purple-500/20", icon: "text-purple-400", highlight: "purple" },
   "Tailoring & Styling": { color: "text-indigo-400", bg: "bg-indigo-500/15", border: "border-indigo-500/20", icon: "text-indigo-400", highlight: "indigo" },
-  "Multi-Hustle": { color: "text-purple-400", bg: "bg-purple-500/15", border: "border-purple-500/20", icon: "text-purple-400", highlight: "purple" },
+  "Multi-Hustle": { color: "text-pink-400", bg: "bg-pink-500/15", border: "border-pink-500/20", icon: "text-pink-400", highlight: "pink" },
 };
 
 const navItems = [
@@ -36,6 +36,7 @@ const navItems = [
   { icon: ImageIcon, label: "Gallery", href: "/admin/gallery" },
   { icon: PenSquare, label: "Site Editor", href: "/admin/editor" },
   { icon: Settings, label: "Settings", href: "/admin/settings" },
+  { icon: Shield, label: "Help Center", href: "/admin/docs" },
 ];
 
 function Clock() {

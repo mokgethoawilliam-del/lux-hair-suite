@@ -104,6 +104,7 @@ export default function AdminSettings() {
             { name: "Clothing & Apparel", icon: "👕", bg: "bg-blue-500/10", border: "border-blue-500/20" },
             { name: "Events & Apparel", icon: "🎟️", bg: "bg-purple-500/10", border: "border-purple-500/20" },
             { name: "Tailoring & Styling", icon: "✂️", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
+            { name: "Multi-Hustle", icon: "🏬", bg: "bg-pink-500/10", border: "border-pink-500/20" },
           ].map((opt) => (
             <button
               key={opt.name}
@@ -250,7 +251,7 @@ export default function AdminSettings() {
             value={settings.about_us}
             onChange={(e) => setSettings({ ...settings, about_us: e.target.value })}
             className="w-full h-32 px-4 py-3 bg-[#0f1117] border border-white/10 rounded-xl focus:border-indigo-500/50 outline-none transition-all text-white text-sm resize-none leading-relaxed"
-            placeholder="Tell your story... e.g. How the Nyuku journey started."
+            placeholder="Tell your story... e.g. How your boutique journey started."
           />
           <p className="text-[9px] text-white/20 italic tracking-wide">
             ✦ Your story will appear in the 'About' section of your landing page. Keep it authentic.

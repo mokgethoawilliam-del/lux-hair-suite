@@ -43,10 +43,14 @@ export async function getSiteMetadata(siteId?: string) {
 
 // Helper to update Site Metadata
 export async function updateSiteMetadata(metadata: Record<string, string>, siteId?: string) {
+  let activeSiteId = siteId;
+  if (!activeSiteId) activeSiteId = await getAdminSite();
+  if (!activeSiteId) throw new Error("Could not identify site for metadata update.");
+
   const updates = Object.entries(metadata).map(([key, value]) => ({
     key,
     value,
-    site_id: siteId,
+    site_id: activeSiteId,
     updated_at: new Date().toISOString(),
   }));
 
@@ -167,6 +171,13 @@ export async function createOrder(orderData: {
 }
 
 // 2. Settings Management
+export async function getAdminSite() {
+  // In a real multi-tenant app, this would check the admin's assigned site.
+  // For this version, we fetch the first site or the 'default' one.
+  const { data } = await supabase.from("sites").select("id").limit(1).single();
+  return data?.id;
+}
+
 export async function getAppSettings(siteId?: string) {
   let query = supabase.from("app_settings").select("*");
   if (siteId) query = query.eq("site_id", siteId);
@@ -182,10 +193,14 @@ export async function getAppSettings(siteId?: string) {
 }
 
 export async function updateAppSettings(settings: Record<string, string>, siteId?: string) {
+  let activeSiteId = siteId;
+  if (!activeSiteId) activeSiteId = await getAdminSite();
+  if (!activeSiteId) throw new Error("Could not identify site for settings update.");
+
   const updates = Object.entries(settings).map(([key, value]) => ({
     key,
     value,
-    site_id: siteId,
+    site_id: activeSiteId,
     updated_at: new Date().toISOString(),
   }));
 
