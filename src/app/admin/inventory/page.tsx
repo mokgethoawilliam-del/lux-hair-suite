@@ -370,29 +370,30 @@ export default function InventoryManager() {
                   </select>
                 </div>
 
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">
+                    {newProduct.category === "Service" ? "Service Price (R)" : "Sale Price (R)"}
+                  </label>
+                  <input 
+                   type="number"
+                   required
+                   value={newProduct.price}
+                   onChange={(e) => setNewProduct({...newProduct, price: parseInt(e.target.value)})}
+                   className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
+                  />
+                </div>
+
                 {newProduct.category !== "Service" && (
-                  <>
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Sale Price (R)</label>
-                      <input 
-                       type="number"
-                       required
-                       value={newProduct.price}
-                       onChange={(e) => setNewProduct({...newProduct, price: parseInt(e.target.value)})}
-                       className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Original Price / RRP (R)</label>
-                      <input 
-                       type="number"
-                       value={newProduct.original_price}
-                       onChange={(e) => setNewProduct({...newProduct, original_price: parseInt(e.target.value)})}
-                       className="w-full px-6 py-4 bg-brand-obsidian border border-emerald-500/10 rounded-2xl focus:border-emerald-500/30 outline-none text-white" 
-                       placeholder="e.g. 2499 (Market Price)"
-                      />
-                    </div>
-                  </>
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Original Price / RRP (R)</label>
+                    <input 
+                     type="number"
+                     value={newProduct.original_price}
+                     onChange={(e) => setNewProduct({...newProduct, original_price: parseInt(e.target.value)})}
+                     className="w-full px-6 py-4 bg-brand-obsidian border border-emerald-500/10 rounded-2xl focus:border-emerald-500/30 outline-none text-white" 
+                     placeholder="e.g. 2499 (Market Price)"
+                    />
+                  </div>
                 )}
 
                 <div className="space-y-2">
@@ -618,18 +619,21 @@ export default function InventoryManager() {
                  </button>
                </div>
 
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">
+                    {editingProduct.category === "Service" ? "Service Price (R)" : "Sale Price (R)"}
+                  </label>
+                  <input 
+                   type="number"
+                   required
+                   value={editingProduct.price}
+                   onChange={(e) => setEditingProduct({...editingProduct, price: parseInt(e.target.value)})}
+                   className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl outline-none text-white focus:border-amber-500" 
+                  />
+                </div>
+
                 {editingProduct.category !== "Service" && (
                   <>
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Sale Price (R)</label>
-                      <input 
-                       type="number"
-                       required
-                       value={editingProduct.price}
-                       onChange={(e) => setEditingProduct({...editingProduct, price: parseInt(e.target.value)})}
-                       className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl outline-none text-white focus:border-amber-500" 
-                      />
-                    </div>
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Original Price (R)</label>
                       <input 
