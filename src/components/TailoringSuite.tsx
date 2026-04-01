@@ -13,6 +13,7 @@ interface Service {
   image_url?: string;
   description?: string;
   category: string;
+  duration_hours?: number;
 }
 
 export default function TailoringSuite({ siteId }: { siteId?: string }) {
@@ -151,6 +152,7 @@ export default function TailoringSuite({ siteId }: { siteId?: string }) {
           serviceId={selectedService.id}
           serviceName={selectedService.name}
           servicePrice={selectedService.price}
+          serviceDuration={selectedService.duration_hours || 1.5}
           isOpen={isCalendarOpen}
           onClose={() => setIsCalendarOpen(false)}
         />

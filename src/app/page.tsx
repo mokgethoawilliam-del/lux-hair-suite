@@ -21,6 +21,7 @@ export default function Home() {
   const [brandName, setBrandName] = useState("KAGISO HAIR");
   const [aboutUs, setAboutUs] = useState("");
   const [businessFocus, setBusinessFocus] = useState("Hair & Beauty");
+  const [siteId, setSiteId] = useState<string>("");
 
   useEffect(() => {
     async function load() {
@@ -30,6 +31,7 @@ export default function Home() {
         if (meta.brand_name) setBrandName(meta.brand_name);
         if (meta.about_us) setAboutUs(meta.about_us);
         if (meta.business_focus) setBusinessFocus(meta.business_focus);
+        if (meta.id) setSiteId(meta.id);
         
         const data = await fetchGalleryImages();
         setGalleryImages(data as GalleryImage[]);
@@ -55,11 +57,11 @@ export default function Home() {
           <CategoryGrid />
           
           <div id="installations">
-            <InstallationSuite />
+            <InstallationSuite siteId={siteId} />
           </div>
           
           <div id="pro-care">
-            <AffiliateSection />
+            <AffiliateSection siteId={siteId} />
           </div>
           <section id="gallery" className="py-24 bg-brand-obsidian overflow-hidden">
             <div className="container mx-auto px-6">

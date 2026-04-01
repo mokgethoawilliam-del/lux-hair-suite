@@ -86,6 +86,14 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
 
   const handleBook = async () => {
     if (!selectedDate || !selectedTime) return alert("Please select a valid date and time.");
+    if (!siteId || siteId === "") {
+       console.error("Booking Logic Error: siteId is missing or empty string.");
+       return alert("Technical Error: Store context missing. Please refresh and try again.");
+    }
+    if (!serviceId || serviceId === "") {
+       console.error("Booking Logic Error: serviceId is missing or empty string.");
+       return alert("Technical Error: Service metadata missing. Please refresh and try again.");
+    }
     
     setLoading(true);
     try {
@@ -160,6 +168,13 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
            <button onClick={onClose} className="absolute top-6 right-6 p-2 text-white/30 hover:text-white transition-opacity">
               <X className="w-5 h-5" />
            </button>
+
+           {(!siteId || siteId === "") && (
+              <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
+                 <Loader2 className="w-8 h-8 animate-spin text-brand-gold" />
+                 <p className="text-white/40 text-xs uppercase tracking-widest">Initializing Secure Connection...</p>
+              </div>
+           )}
 
            <AnimatePresence mode="wait">
              {success ? (
