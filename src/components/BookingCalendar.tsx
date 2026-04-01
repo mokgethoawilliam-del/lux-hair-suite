@@ -11,11 +11,12 @@ interface BookingCalendarProps {
   serviceId: string;
   serviceName: string;
   servicePrice: number;
+  serviceDuration: number;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function BookingCalendar({ siteId, serviceId, serviceName, servicePrice, isOpen, onClose }: BookingCalendarProps) {
+export default function BookingCalendar({ siteId, serviceId, serviceName, servicePrice, serviceDuration, isOpen, onClose }: BookingCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [step, setStep] = useState(1);
@@ -69,7 +70,7 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
     try {
       // Ensure ISO format for Supabase (YYYY-MM-DDTHH:mm:ss.sssZ)
       const start = new Date(`${selectedDate}T${selectedTime}:00`);
-      const end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // 2hr duration
+      const end = new Date(start.getTime() + serviceDuration * 60 * 60 * 1000); // Dynamic Duration
 
       const { error } = await supabase
         .from("bookings")
@@ -120,7 +121,7 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
                     <CalendarIcon className="w-5 h-5 text-brand-gold" />
                  </div>
                  <h3 className="text-xl font-serif text-white mb-2">{serviceName}</h3>
-                 <p className="text-[10px] uppercase tracking-widest text-white/40 font-bold mb-4">Duration: 2 Hours</p>
+                 <p className="text-[10px] uppercase tracking-widest text-white/40 font-bold mb-4">Duration: {serviceDuration} Hours</p>
                  <div className="h-px w-8 bg-brand-gold/50 mb-6" />
                  <p className="text-2xl font-serif text-white font-bold italic">R {servicePrice}</p>
               </div>

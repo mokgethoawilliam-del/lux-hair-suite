@@ -37,6 +37,7 @@ interface Product {
   created_at: string;
   is_new: boolean;
   caption?: string;
+  duration_hours?: number; // Estimated Service Time
 }
 
 const LUXURY_COLORS = [
@@ -245,7 +246,8 @@ export default function InventoryManager() {
     sizes: [] as string[],
     colors: [] as string[],
     is_new: false,
-    caption: ""
+    caption: "",
+    duration_hours: 2.0 // Default 2hr service
   });
 
   const theme = {
@@ -323,7 +325,8 @@ export default function InventoryManager() {
       sizes: [],
       colors: [],
       is_new: false,
-      caption: ""
+      caption: "",
+      duration_hours: 2.0
     });
   };
 
@@ -355,7 +358,8 @@ export default function InventoryManager() {
         colors: newProduct.colors,
         stock_count: Number(newProduct.stock_count),
         is_new: newProduct.is_new,
-        caption: newProduct.caption
+        caption: newProduct.caption,
+        duration_hours: newProduct.category === "Service" ? Number(newProduct.duration_hours) : 0
       };
 
       const { data, error } = await supabase
@@ -401,7 +405,10 @@ export default function InventoryManager() {
         stock_count: Number(editingProduct.stock_count),
         description: editingProduct.description,
         sizes: Array.isArray(editingProduct.sizes) ? editingProduct.sizes : [],
-        colors: Array.isArray(editingProduct.colors) ? editingProduct.colors : []
+        colors: Array.isArray(editingProduct.colors) ? editingProduct.colors : [],
+        is_new: editingProduct.is_new,
+        caption: editingProduct.caption,
+        duration_hours: editingProduct.category === "Service" ? Number(editingProduct.duration_hours) : 0
       };
 
       const { data, error } = await supabase
@@ -602,6 +609,19 @@ export default function InventoryManager() {
                       {newProduct.is_new ? 'Active: NEW IN' : 'Standard Collection'}
                     </button>
                   </div>
+                  {newProduct.category === "Service" && (
+                     <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Estimated Time (Hours)</label>
+                        <input 
+                          type="number"
+                          step="0.5"
+                          value={newProduct.duration_hours}
+                          onChange={(e) => setNewProduct({...newProduct, duration_hours: parseFloat(e.target.value)})}
+                          className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white italic" 
+                          placeholder="e.g. 2.5"
+                        />
+                     </div>
+                  )}
                   {newProduct.category === "Gallery" && (
                      <div className="space-y-2">
                         <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Gallery Story (Caption)</label>
@@ -903,6 +923,18 @@ export default function InventoryManager() {
                       {editingProduct.is_new ? 'ACTIVE: NEW IN' : 'STANDARD STOCK'}
                     </button>
                   </div>
+                  {editingProduct.category === "Service" && (
+                     <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Service Time (Hours)</label>
+                        <input 
+                          type="number"
+                          step="0.5"
+                          value={editingProduct.duration_hours}
+                          onChange={(e) => setEditingProduct({...editingProduct, duration_hours: parseFloat(e.target.value)})}
+                          className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white italic" 
+                        />
+                     </div>
+                  )}
                   {editingProduct.category === "Gallery" && (
                      <div className="space-y-2">
                         <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Gallery Caption</label>

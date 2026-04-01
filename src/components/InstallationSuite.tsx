@@ -16,6 +16,7 @@ interface Service {
   category: string;
   is_in_stock: boolean;
   stock_count?: number;
+  duration_hours?: number;
 }
 
 export default function InstallationSuite({ siteId }: { siteId?: string }) {
@@ -212,6 +213,7 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
           serviceId={selectedService.id}
           serviceName={selectedService.name}
           servicePrice={selectedService.price}
+          serviceDuration={selectedService.duration_hours || 2}
           isOpen={isCalendarOpen}
           onClose={() => setIsCalendarOpen(false)}
         />
