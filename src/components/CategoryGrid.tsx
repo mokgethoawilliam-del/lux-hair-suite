@@ -19,6 +19,8 @@ interface HairProduct {
   stock_count?: number;
   sizes?: string[];
   colors?: string[];
+  is_new?: boolean;
+  caption?: string;
 }
 
 const COLOR_MAP: Record<string, string> = {
@@ -63,6 +65,7 @@ export default function CategoryGrid({ siteId }: { siteId?: string }) {
           .select("*")
           .neq("category", "Service")
           .neq("category", "Gallery")
+          .order("is_new", { ascending: false })
           .order("is_in_stock", { ascending: false })
           .order("created_at", { ascending: false })
           .limit(12);
@@ -141,6 +144,12 @@ export default function CategoryGrid({ siteId }: { siteId?: string }) {
 
                   <div className="absolute inset-0 bg-brand-emerald/10 group-hover:bg-transparent transition-all duration-500 z-10" />
                   
+                  {product.is_new && (
+                    <div className="absolute top-4 right-4 z-50 bg-amber-500 text-brand-obsidian text-[10px] font-black px-3 py-1.5 rounded-sm shadow-xl uppercase tracking-tighter">
+                      NEW
+                    </div>
+                  )}
+
                   {!product.is_in_stock && (
                     <div className="absolute inset-0 z-30 bg-brand-obsidian/60 flex items-center justify-center backdrop-blur-[2px]">
                       <span className="px-6 py-2 bg-white text-brand-obsidian text-[10px] font-bold uppercase tracking-widest rounded-full shadow-2xl">Sold Out</span>

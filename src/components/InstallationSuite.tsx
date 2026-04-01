@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Loader2, MessageCircle, ShoppingCart, Calendar as CalendarIcon } from "lucide-react";
+import { Loader2, MessageCircle, ShoppingCart, Calendar as CalendarIcon, Scissors, Sparkles, Wand2, Star, Camera, Palette } from "lucide-react";
 import { getSiteMetadata, supabase } from "@/lib/supabase";
 import BookingCalendar from "./BookingCalendar";
 
@@ -65,6 +65,19 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
     setIsCalendarOpen(true);
   };
 
+  const getServiceIcon = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes("frontal") || n.includes("install")) return <Scissors className="w-10 h-10" />;
+    if (n.includes("style") || n.includes("curl")) return <Sparkles className="w-10 h-10" />;
+    if (n.includes("color") || n.includes("dye")) return <Palette className="w-10 h-10" />;
+    if (n.includes("wig") || n.includes("revamp")) return <Wand2 className="w-10 h-10" />;
+    return <Star className="w-10 h-10" />;
+  };
+
+  const scrollToGallery = () => {
+    document.getElementById("gallery")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <section id="installations" className="py-24 bg-brand-emerald/10 border-y border-white/5">
       <div className="container mx-auto px-6">
@@ -97,24 +110,26 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
                     transition={{ delay: idx * 0.1 }}
                     className="group relative bg-brand-emerald/5 border border-white/5 rounded-2xl overflow-hidden hover:border-brand-gold/30 transition-all"
                   >
-                    {/* Image Aspect Ratio Box */}
-                    <div className="relative aspect-[4/5] overflow-hidden">
-                      <div className="absolute inset-0 bg-brand-emerald/20 group-hover:bg-transparent transition-all duration-500 z-10" />
+                    {/* Icon Perspective Box (Replacing Image) */}
+                    <div className="relative aspect-[4/5] overflow-hidden bg-brand-obsidian/40 flex items-center justify-center group-hover:bg-brand-gold/5 transition-colors">
+                      <div className="absolute inset-0 bg-brand-emerald/10 group-hover:bg-transparent transition-all duration-500 z-10" />
                       {!cat.is_in_stock && (
                         <div className="absolute inset-0 z-30 bg-brand-obsidian/60 flex items-center justify-center backdrop-blur-[2px]">
-                          <span className="px-6 py-2 bg-white text-brand-obsidian text-[10px] font-bold uppercase tracking-widest rounded-full shadow-2xl">Sold Out / Fully Booked</span>
+                          <span className="px-6 py-2 bg-white text-brand-obsidian text-[10px] font-bold uppercase tracking-widest rounded-full shadow-2xl">Fully Booked</span>
                         </div>
                       )}
-                      {cat.original_price && cat.original_price > cat.price && (
-                        <div className="absolute top-4 left-4 z-30 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg">
-                          {Math.round(((cat.original_price - cat.price) / cat.original_price) * 100)}% OFF
-                        </div>
-                      )}
-                      <img 
-                        src={cat.image_url || ""} 
-                        alt={cat.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                      />
+                      
+                      <div className="relative z-20 text-brand-gold/20 group-hover:text-brand-gold transition-all duration-500 transform group-hover:scale-110">
+                        {getServiceIcon(cat.name)}
+                      </div>
+                      
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); scrollToGallery(); }}
+                        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 px-4 py-2 bg-white/5 hover:bg-white text-white/40 hover:text-brand-obsidian text-[8px] font-bold uppercase tracking-widest rounded-full border border-white/5 transition-all opacity-0 group-hover:opacity-100 flex items-center gap-2"
+                      >
+                        <Camera className="w-3 h-3" />
+                        Ref. Gallery
+                      </button>
                     </div>
 
                     {/* Content */}

@@ -35,6 +35,8 @@ interface Product {
   sizes: string[];
   colors: string[];
   created_at: string;
+  is_new: boolean;
+  caption?: string;
 }
 
 const LUXURY_COLORS = [
@@ -241,7 +243,9 @@ export default function InventoryManager() {
     image_url: "", // Legacy first image
     image_urls: [] as string[], // Multi-image support
     sizes: [] as string[],
-    colors: [] as string[]
+    colors: [] as string[],
+    is_new: false,
+    caption: ""
   });
 
   const theme = {
@@ -317,7 +321,9 @@ export default function InventoryManager() {
       image_url: "",
       image_urls: [],
       sizes: [],
-      colors: []
+      colors: [],
+      is_new: false,
+      caption: ""
     });
   };
 
@@ -347,7 +353,9 @@ export default function InventoryManager() {
         affiliate_link: newProduct.affiliate_link,
         sizes: newProduct.sizes,
         colors: newProduct.colors,
-        stock_count: Number(newProduct.stock_count)
+        stock_count: Number(newProduct.stock_count),
+        is_new: newProduct.is_new,
+        caption: newProduct.caption
       };
 
       const { data, error } = await supabase
@@ -582,6 +590,30 @@ export default function InventoryManager() {
                     </div>
                   </>
                 )}
+
+                <div className="col-span-full grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">New Collection Launch?</label>
+                    <button 
+                      type="button"
+                      onClick={() => setNewProduct({...newProduct, is_new: !newProduct.is_new})}
+                      className={`w-full px-6 py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-2 ${newProduct.is_new ? "bg-amber-500 text-brand-obsidian shadow-lg shadow-amber-500/20" : "bg-white/5 text-white/20 border border-white/5"}`}
+                    >
+                      {newProduct.is_new ? 'Active: NEW IN' : 'Standard Collection'}
+                    </button>
+                  </div>
+                  {newProduct.category === "Gallery" && (
+                     <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Gallery Story (Caption)</label>
+                        <input 
+                          value={newProduct.caption}
+                          onChange={(e) => setNewProduct({...newProduct, caption: e.target.value})}
+                          className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white italic" 
+                          placeholder="e.g. Recent Bridal Install"
+                        />
+                     </div>
+                  )}
+                </div>
 
                 <div className="col-span-full space-y-2">
                    <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Description</label>
@@ -860,15 +892,38 @@ export default function InventoryManager() {
                   </>
                 )}
 
-               <div className="col-span-full space-y-2">
-                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Update Description</label>
-                  <textarea 
-                    rows={2}
-                    value={editingProduct.description || ""}
-                    onChange={(e) => setEditingProduct({...editingProduct, description: e.target.value})}
-                    className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white resize-none" 
-                  />
-               </div>
+                <div className="col-span-full grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Mark as 'New In'?</label>
+                    <button 
+                      type="button"
+                      onClick={() => setEditingProduct({...editingProduct, is_new: !editingProduct.is_new})}
+                      className={`w-full px-6 py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-2 ${editingProduct.is_new ? "bg-amber-500 text-brand-obsidian shadow-lg shadow-amber-500/20" : "bg-white/5 text-white/20 border border-white/5"}`}
+                    >
+                      {editingProduct.is_new ? 'ACTIVE: NEW IN' : 'STANDARD STOCK'}
+                    </button>
+                  </div>
+                  {editingProduct.category === "Gallery" && (
+                     <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Gallery Caption</label>
+                        <input 
+                          value={editingProduct.caption}
+                          onChange={(e) => setEditingProduct({...editingProduct, caption: e.target.value})}
+                          className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white italic" 
+                        />
+                     </div>
+                  )}
+                </div>
+
+                <div className="col-span-full space-y-2">
+                   <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Update Description</label>
+                   <textarea 
+                     rows={2}
+                     value={editingProduct.description || ""}
+                     onChange={(e) => setEditingProduct({...editingProduct, description: e.target.value})}
+                     className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white resize-none" 
+                   />
+                </div>
                <div className="col-span-full flex gap-4 pt-6">
                   <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 py-4 border border-white/10 rounded-2xl text-white/40 font-bold uppercase tracking-widest text-xs hover:bg-white/5">Cancel</button>
                   <button type="submit" disabled={isSaving} className="flex-2 py-4 bg-white text-brand-obsidian rounded-2xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2">

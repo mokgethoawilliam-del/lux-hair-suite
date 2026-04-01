@@ -63,26 +63,33 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
   }, [selectedDate, siteId]);
 
   const handleBook = async () => {
+    if (!selectedDate || !selectedTime) return alert("Please select a valid date and time.");
+    
     setLoading(true);
     try {
-      const start = new Date(`${selectedDate}T${selectedTime}`);
-      const end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // Default 2hr slot
+      // Ensure ISO format for Supabase (YYYY-MM-DDTHH:mm:ss.sssZ)
+      const start = new Date(`${selectedDate}T${selectedTime}:00`);
+      const end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // 2hr duration
 
-      await createBooking({
-        site_id: siteId,
-        service_id: serviceId,
-        customer_name: customer.name,
-        customer_phone: customer.phone,
-        customer_email: customer.email,
-        slot_start: start.toISOString(),
-        slot_end: end.toISOString(),
-        notes: customer.notes
-      });
+      const { error } = await supabase
+        .from("bookings")
+        .insert([{
+          site_id: siteId,
+          service_id: serviceId,
+          customer_name: customer.name,
+          customer_phone: customer.phone,
+          customer_email: customer.email,
+          slot_start: start.toISOString(),
+          slot_end: end.toISOString(),
+          notes: customer.notes,
+          status: 'Pending'
+        }]);
 
+      if (error) throw error;
       setSuccess(true);
-    } catch (err) {
-      console.error("Booking Error:", err);
-      alert("Something went wrong. Please try again.");
+    } catch (err: any) {
+      console.error("Booking Error Detail:", err);
+      alert(`Booking Failed: ${err.message || 'Server Error'}`);
     } finally {
       setLoading(false);
     }
