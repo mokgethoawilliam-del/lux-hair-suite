@@ -29,9 +29,8 @@ export async function captureLead(leadData: { name: string; whatsapp_number: str
 
 // Helper to fetch Site Metadata (for Live CMS)
 export async function getSiteMetadata(siteId?: string) {
-  let query = supabase.from("site_metadata").select("*");
-  if (siteId) query = query.eq("site_id", siteId);
-  
+  if (!siteId) return {}; // Identity Guard
+  let query = supabase.from("site_metadata").select("*").eq("site_id", siteId);
   const { data, error } = await query;
   if (error) return {};
   
@@ -76,9 +75,8 @@ export async function updateSiteDomain(domain: string, siteId: string) {
 
 // Helper for Gallery/Products
 export async function fetchGalleryImages(siteId?: string) {
-  let query = supabase.from("products").select("*").eq("category", "Gallery");
-  if (siteId) query = query.eq("site_id", siteId);
-  
+  if (!siteId) return []; // Identity Guard
+  let query = supabase.from("products").select("*").eq("category", "Gallery").eq("site_id", siteId);
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw error;
   return data;
@@ -216,8 +214,22 @@ export async function resolveSiteId() {
       if (site) return site.id;
     }
     
-    const { data: finalSite } = await supabase.from("sites").select("id").limit(1).single();
-    return finalSite?.id;
+    // Industrial Resilience: Definitive Fallback for this deployment
+    const { data: mainSite } = await supabase
+      .from("sites")
+      .select("id")
+      .eq("subdomain_slug", "lux-hair-suite")
+      .single();
+    if (mainSite) return mainSite.id;
+    
+    // Final Fallback: First available site
+    const { data: finalSite } = await supabase
+       .from("sites")
+       .select("id")
+       .order("created_at", { ascending: true })
+       .limit(1)
+       .single();
+    return finalSite?.id || null;
   } catch (err) {
     console.error("Error resolving siteId:", err);
     return null;
@@ -260,15 +272,15 @@ export async function updateAppSettings(settings: Record<string, string>, siteId
 }
 
 export async function fetchOrders(siteId?: string) {
+  if (!siteId) return []; // Identity Guard
   let query = supabase
     .from("orders")
     .select(`
       *,
       customers (full_name, whatsapp_number, email),
       products (name)
-    `);
-  
-  if (siteId) query = query.eq("site_id", siteId);
+    `)
+    .eq("site_id", siteId); // Absolute isolation
   
   const { data, error } = await query.order("created_at", { ascending: false });
 
@@ -278,14 +290,14 @@ export async function fetchOrders(siteId?: string) {
 
 // 3. Booking Engine
 export async function fetchBookings(siteId?: string) {
+  if (!siteId) return []; // Identity Guard
   let query = supabase
     .from("bookings")
     .select(`
       *,
       products (name, price)
-    `);
-  
-  if (siteId) query = query.eq("site_id", siteId);
+    `)
+    .eq("site_id", siteId); // Absolute isolation
   
   const { data, error } = await query.order("slot_start", { ascending: true });
 

@@ -67,18 +67,22 @@ export default function CategoryGrid({ siteId }: { siteId?: string }) {
           activeSiteId = (await resolveSiteId()) || "";
         }
 
-        // 2. Fetch Inventory (Everything EXCEPT Services/Gallery)
+        // 2. Fetch Inventory (Strictly require activeSiteId)
+        if (!activeSiteId) {
+          console.warn("CategoryGrid: Identification delayed. Awaiting identity resolve.");
+          return;
+        }
+
         let query = supabase
           .from("products")
           .select("*")
-          .neq("type", "Service") // Filter out professional services
+          .eq("site_id", activeSiteId) // Strictly isolate data to this site
+          .neq("type", "Service") 
           .neq("category", "Gallery")
           .order("is_new", { ascending: false })
           .order("is_in_stock", { ascending: false })
           .order("created_at", { ascending: false })
           .limit(12);
-        
-        if (activeSiteId) query = query.eq("site_id", activeSiteId);
         
         const { data, error } = await query;
         if (error) throw error;

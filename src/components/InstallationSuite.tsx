@@ -38,15 +38,19 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
            activeSiteId = (await resolveSiteId()) || "";
         }
 
-        // 2. Fetch Services (By Type for absolute reliability)
+        // 2. Fetch Services (Strictly require activeSiteId)
+        if (!activeSiteId) {
+           console.warn("InstallationSuite: Identification delayed. Awaiting identity resolve.");
+           return; 
+        }
+
         let query = supabase
           .from("products")
           .select("*")
-          .eq("type", "Service") // Type is robust across all sub-categories
+          .eq("site_id", activeSiteId) // Strictly isolate data to this site
+          .eq("type", "Service") 
           .order("is_in_stock", { ascending: false })
           .order("created_at", { ascending: false });
-        
-        if (activeSiteId) query = query.eq("site_id", activeSiteId);
         
         const { data, error } = await query;
         if (error) throw error;
