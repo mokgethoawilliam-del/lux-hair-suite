@@ -11,6 +11,7 @@ const DOCS = [
     articles: [
       { id: "setup", title: "Launching Your First Vault", content: "Learn how to set up your business focus, brand name, and story in the Settings tab." },
       { id: "theme", title: "Customizing Your Brand Theme", content: "Selecting a Business Focus automatically re-themes your storefront. Choose between Hair, Sneakers, Fashion, or Multi-Hustle." },
+      { id: "scheduler", title: "Power Scheduler (Gmail Sync)", content: "Connect your Cal.com event link in Settings to enable professional scheduling with native Gmail/Google Calendar sync and automated reminders." },
     ]
   },
   {
@@ -18,6 +19,7 @@ const DOCS = [
     icon: PenSquare,
     articles: [
       { id: "inventory", title: "Managing Diverse Products", content: "How to add weaves, sneakers, or tech items to your inventory. Remember to use high-quality images for a premium look." },
+      { id: "variants", title: "Upgrading Variants (Sizes & Colors)", content: "Use the 'Edit' tool to add sizes and colors to existing stock. Our searchable Multi-Select Color Picker supports luxury presets for professional listing." },
       { id: "multi-hustle", title: "The Multi-Hustle Strategy", content: "Selling both Services (Hair) and Products (Sneakers)? Use the Multi-Hustle focus for a versatile shop layout." },
     ]
   },

@@ -2,7 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, Plus, Trash2, ArrowUpDown, Loader2, PenSquare } from "lucide-react";
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  MoreHorizontal, 
+  Trash2, 
+  PenSquare, 
+  Package, 
+  TrendingUp, 
+  AlertCircle,
+  Loader2,
+  ArrowUpDown,
+  X,
+  Palette
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface Product {
@@ -10,61 +24,136 @@ interface Product {
   name: string;
   category: string;
   price: number;
-  original_price?: number;
-  image_url?: string;
+  original_price: number | null;
+  image_url: string;
+  type: string;
   is_in_stock: boolean;
-  description?: string;
-  affiliate_link?: string;
-  sizes?: string[];
-  colors?: string[];
-  stock_count?: number;
+  stock_count: number;
+  description: string;
+  affiliate_link: string | null;
+  sizes: string[];
+  colors: string[];
+  created_at: string;
+}
+
+const LUXURY_COLORS = [
+  { name: "Jet Black", hex: "#000000" },
+  { name: "Raw Emerald", hex: "#064e3b" },
+  { name: "Gold Dust", hex: "#d97706" },
+  { name: "Deep Obsidian", hex: "#111827" },
+  { name: "White Silk", hex: "#f8fafc" },
+  { name: "Burgundy Velvet", hex: "#7f1d1d" },
+  { name: "Midnight Blue", hex: "#1e3a8a" },
+  { name: "Silver Ash", hex: "#94a3b8" }
+];
+
+function ColorPicker({ selected, onChange }: { selected: string[], onChange: (colors: string[]) => void }) {
+  const [search, setSearch] = useState("");
+  const filtered = LUXURY_COLORS.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
+
+  const toggle = (color: string) => {
+    if (selected.includes(color)) {
+      onChange(selected.filter(c => c !== color));
+    } else {
+      onChange([...selected, color]);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/20" />
+        <input 
+          type="text"
+          placeholder="Search colors..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] outline-none focus:border-amber-500/50"
+        />
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {filtered.map(c => (
+          <button
+            key={c.name}
+            type="button"
+            onClick={() => toggle(c.name)}
+            className={`group relative h-10 rounded-lg border transition-all flex items-center justify-center ${selected.includes(c.name) ? "border-amber-500 bg-amber-500/10 shadow-[0_0_15px_-5px_#f59e0b]" : "border-white/5 bg-white/5 hover:border-white/20"}`}
+          >
+            <div 
+              className="w-4 h-4 rounded-full border border-white/10" 
+              style={{ backgroundColor: c.hex }}
+            />
+            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-all z-20 whitespace-nowrap bg-brand-obsidian px-2 py-1 rounded text-[8px] font-bold text-amber-500 uppercase">
+              {c.name}
+            </div>
+          </button>
+        ))}
+      </div>
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-white/5">
+          {selected.map(c => (
+            <span key={c} className="text-[8px] font-bold uppercase tracking-widest text-amber-500 bg-amber-500/10 px-2 py-1 rounded-full border border-amber-500/20">
+              {c}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function InventoryManager() {
   const [inventory, setInventory] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [businessFocus, setBusinessFocus] = useState("Hair & Beauty");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      const { getAppSettings } = await import("@/lib/supabase");
-      const [invData, settings] = await Promise.all([
-        supabase.from("products").select("*").order("created_at", { ascending: false }),
-        getAppSettings()
-      ]);
-      
-      if (invData.error) throw invData.error;
-      setInventory((invData.data as Product[]) || []);
-      setBusinessFocus(settings.business_focus || "Hair & Beauty");
-      
-      // Default category based on focus
-      if (settings.business_focus === "Sneakers & Streetwear") {
-        setNewProduct(prev => ({ ...prev, category: "Sneakers" }));
-      } else if (settings.business_focus === "Clothing & Apparel") {
-        setNewProduct(prev => ({ ...prev, category: "Clothing" }));
-      }
-    } catch (err) {
-      console.error("Error loading data:", err);
-    } finally {
-      setIsLoading(false);
-    }
+  // New Product State
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    category: "Frontal",
+    price: 0,
+    original_price: 0,
+    type: "product",
+    is_in_stock: true,
+    stock_count: 10,
+    description: "",
+    affiliate_link: "",
+    image_url: "",
+    sizes: [] as string[],
+    colors: [] as string[]
+  });
+
+  const theme = {
+    bg: "bg-brand-obsidian",
+    card: "bg-white/5",
+    text: "text-amber-500",
+    border: "border-white/10"
   };
 
   useEffect(() => {
-    loadData();
+    fetchInventory();
   }, []);
 
-  const themeColors: Record<string, { text: string; bg: string; button: string; border: string; highlight: string }> = {
-    "Hair & Beauty": { text: "text-emerald-500", bg: "bg-emerald-500", button: "bg-emerald-500", border: "border-emerald-500/20", highlight: "emerald" },
-    "Sneakers & Streetwear": { text: "text-amber-500", bg: "bg-amber-500", button: "bg-amber-500", border: "border-amber-500/20", highlight: "amber" },
-    "Clothing & Apparel": { text: "text-blue-500", bg: "bg-blue-500", button: "bg-blue-500", border: "border-blue-500/20", highlight: "blue" },
-    "Multi-Hustle": { text: "text-purple-500", bg: "bg-purple-500", button: "bg-purple-500", border: "border-purple-500/20", highlight: "purple" },
+  const fetchInventory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      setInventory((data as Product[]) || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const theme = themeColors[businessFocus] || themeColors["Hair & Beauty"];
 
   const toggleStatus = async (id: string, currentStatus: boolean) => {
     try {
@@ -78,39 +167,41 @@ export default function InventoryManager() {
         item.id === id ? { ...item, is_in_stock: !currentStatus } : item
       ));
     } catch (err) {
-      console.error("Error toggling status:", err);
+      console.error(err);
     }
   };
 
   const deleteProduct = async (id: string) => {
-     if (!confirm("Are you sure? This will remove the product/service from the store.")) return;
-     try {
-       const { error } = await supabase.from("products").delete().eq("id", id);
-       if (error) throw error;
-       setInventory(inventory.filter(item => item.id !== id));
-     } catch (err) {
-       console.error("Error deleting product:", err);
-     }
+    if (!confirm("Are you sure? This action cannot be undone.")) return;
+    try {
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+      setInventory(inventory.filter(item => item.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-
-  const [newProduct, setNewProduct] = useState({ 
-    name: "", 
-    category: "Frontal", 
-    price: 0, 
-    original_price: 0,
-    image_url: "", 
-    type: "In-Stock", 
-    description: "", 
-    affiliate_link: "",
-    sizes: "", 
-    colors: "",
-    stock_count: 10
-  });
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const resetNewProduct = () => {
+    setNewProduct({
+      name: "",
+      category: "Frontal",
+      price: 0,
+      original_price: 0,
+      type: "product",
+      is_in_stock: true,
+      stock_count: 10,
+      description: "",
+      affiliate_link: "",
+      image_url: "",
+      sizes: [],
+      colors: []
+    });
+  };
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,8 +224,8 @@ export default function InventoryManager() {
         type: newProduct.type,
         description: newProduct.description,
         affiliate_link: newProduct.affiliate_link,
-        sizes: newProduct.sizes.split(",").map(s => s.trim()).filter(s => s !== ""),
-        colors: newProduct.colors.split(",").map(c => c.trim()).filter(c => c !== ""),
+        sizes: newProduct.sizes,
+        colors: newProduct.colors,
         stock_count: Number(newProduct.stock_count)
       };
 
@@ -167,21 +258,28 @@ export default function InventoryManager() {
         finalImageUrl = await uploadImage(imageFile);
       }
 
-      const { error } = await supabase
-        .from("products")
-        .update({
-          ...editingProduct,
-          image_url: finalImageUrl,
-          price: Number(editingProduct.price),
-          original_price: editingProduct.original_price ? Number(editingProduct.original_price) : null,
-          stock_count: Number(editingProduct.stock_count)
-        })
-        .eq("id", editingProduct.id);
+      const payload = {
+        name: editingProduct.name,
+        is_in_stock: editingProduct.is_in_stock,
+        price: Number(editingProduct.price),
+        original_price: editingProduct.original_price ? Number(editingProduct.original_price) : null,
+        image_url: finalImageUrl,
+        stock_count: Number(editingProduct.stock_count),
+        description: editingProduct.description,
+        sizes: Array.isArray(editingProduct.sizes) ? editingProduct.sizes : [],
+        colors: Array.isArray(editingProduct.colors) ? editingProduct.colors : []
+      };
 
+      const { data, error } = await supabase
+        .from("products")
+        .update(payload)
+        .eq("id", editingProduct.id)
+        .select()
+        .single();
+      
       if (error) throw error;
-      setInventory(inventory.map(p => p.id === editingProduct.id ? { ...editingProduct, image_url: finalImageUrl } : p));
+      setInventory(inventory.map(item => item.id === data.id ? data as Product : item));
       setIsEditModalOpen(false);
-      setEditingProduct(null);
       setImageFile(null);
     } catch (err: any) {
       alert(`Error: ${err.message}`);
@@ -190,44 +288,50 @@ export default function InventoryManager() {
     }
   };
 
-  const resetNewProduct = () => {
-    setNewProduct({ 
-      name: "", 
-      category: businessFocus === "Sneakers & Streetwear" ? "Sneakers" : businessFocus === "Clothing & Apparel" ? "Clothing" : "Frontal", 
-      price: 0, 
-      original_price: 0,
-      image_url: "", 
-      type: "In-Stock", 
-      description: "", 
-      affiliate_link: "",
-      sizes: "",
-      colors: "",
-      stock_count: 10
-    });
-  };
-
   const filteredInventory = inventory.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (isLoading) return <div className="p-20 text-center"><Loader2 className={`animate-spin ${theme.text} mx-auto`} /></div>;
-
   return (
-    <div className="space-y-12 relative">
-      <div className="flex items-center justify-between">
+    <div className="p-8 pb-32 max-w-7xl mx-auto space-y-12">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-serif mb-2 text-white">Inventory <span className={`${theme.text} italic`}>Vault</span></h1>
-          <p className="text-white/30 text-sm font-medium tracking-widest uppercase">DIRECT STOCK CONTROL · {businessFocus.toUpperCase()}</p>
+          <p className="text-xs text-amber-500/60 uppercase tracking-[0.2em] font-bold mb-1">Administrative Terminal</p>
+          <h1 className="text-4xl font-serif text-white uppercase tracking-tighter italic">Inventory <span className={theme.text}>Vault</span></h1>
         </div>
-        
         <button 
           onClick={() => setIsAddModalOpen(true)}
-          className={`px-8 py-4 ${theme.button} text-brand-obsidian font-bold rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-lg shadow-${theme.highlight}-500/20`}
+          className="px-8 py-4 bg-amber-500 text-brand-obsidian rounded-2xl font-bold uppercase tracking-widest text-[10px] shadow-xl shadow-amber-500/20 flex items-center gap-3 hover:scale-105 active:scale-95 transition-all"
         >
-          <Plus className="w-5 h-5" />
-          Add New Product
+          <Plus className="w-4 h-4" /> Add New Item
         </button>
+      </div>
+
+      {/* Stats Quick View */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="p-8 bg-white/5 border border-white/5 rounded-[32px] space-y-4">
+          <div className="flex items-center gap-4 text-white/40">
+            <Package className="w-5 h-5" />
+            <span className="text-xs uppercase tracking-widest font-bold">Total Stock</span>
+          </div>
+          <p className="text-4xl font-serif text-white">{inventory.length}</p>
+        </div>
+        <div className="p-8 bg-white/5 border border-white/5 rounded-[32px] space-y-4">
+          <div className="flex items-center gap-4 text-emerald-400/60">
+            <TrendingUp className="w-5 h-5" />
+            <span className="text-xs uppercase tracking-widest font-bold">Active Listings</span>
+          </div>
+          <p className="text-4xl font-serif text-white">{inventory.filter(i => i.is_in_stock).length}</p>
+        </div>
+        <div className="p-8 bg-white/5 border border-white/5 rounded-[32px] space-y-4">
+          <div className="flex items-center gap-4 text-red-400/60">
+            <AlertCircle className="w-5 h-5" />
+            <span className="text-xs uppercase tracking-widest font-bold">Out of Stock</span>
+          </div>
+          <p className="text-4xl font-serif text-white">{inventory.filter(i => !i.is_in_stock).length}</p>
+        </div>
       </div>
 
       {/* Add Modal */}
@@ -236,126 +340,135 @@ export default function InventoryManager() {
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white/5 border border-white/5 p-12 rounded-[40px] w-full max-w-2xl max-h-full overflow-auto space-y-8 shadow-2xl">
             <h2 className="text-3xl font-serif text-white">Add <span className={`${theme.text} italic`}>New Item</span></h2>
             <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <div className="space-y-2">
-                 <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Product Name</label>
-                 <input 
-                  required
-                  value={newProduct.name}
-                  onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
-                 />
-               </div>
-               <div className="space-y-2">
-                 <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Category</label>
-                 <select 
-                  value={newProduct.category}
-                  onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
-                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white"
-                 >
-                    <optgroup label="Hair & Beauty">
-                      <option value="Frontal">Frontal</option>
-                      <option value="Weave">Weave</option>
-                      <option value="Ponytail">Ponytail</option>
-                      <option value="Service">Service (Installation)</option>
-                    </optgroup>
-                    <optgroup label="Sneakers & Clothing">
-                      <option value="Sneakers">Sneakers (Direct Stock)</option>
-                      <option value="Clothing">Clothing / Apparel</option>
-                    </optgroup>
-                    <option value="Pro-Care">Pro-Care / Accessories</option>
-                 </select>
-               </div>
-               <div className="space-y-2">
-                 <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Sale Price (R)</label>
-                 <input 
-                  type="number"
-                  required
-                  value={newProduct.price}
-                  onChange={(e) => setNewProduct({...newProduct, price: parseInt(e.target.value)})}
-                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
-                 />
-               </div>
-               <div className="space-y-2">
-                 <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Original Price / RRP (R)</label>
-                 <input 
-                  type="number"
-                  value={newProduct.original_price}
-                  onChange={(e) => setNewProduct({...newProduct, original_price: parseInt(e.target.value)})}
-                  className="w-full px-6 py-4 bg-brand-obsidian border border-emerald-500/10 rounded-2xl focus:border-emerald-500/30 outline-none text-white" 
-                  placeholder="e.g. 2499 (Market Price)"
-                 />
-               </div>
-               <div className="space-y-2">
-                 <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Product Media</label>
-                 <div className="relative group/upload">
-                   <input 
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                   />
-                   <div className="w-full px-6 py-4 bg-brand-obsidian border border-dashed border-white/10 rounded-2xl group-hover/upload:border-amber-500/50 transition-all text-center">
-                      <span className="text-xs text-white/40 group-hover/upload:text-amber-500 transition-colors">
-                        {imageFile ? imageFile.name : 'Click to Upload Product Image'}
-                      </span>
-                   </div>
-                 </div>
-               </div>
-               
-               <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Stock Quantity</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Product Name</label>
                   <input 
-                   type="number"
-                   value={newProduct.stock_count}
-                   onChange={(e) => setNewProduct({...newProduct, stock_count: parseInt(e.target.value)})}
+                   required
+                   value={newProduct.name}
+                   onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
                    className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
                   />
-               </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Category</label>
+                  <select 
+                   value={newProduct.category}
+                   onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
+                   className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white"
+                  >
+                     <optgroup label="Hair & Beauty">
+                       <option value="Frontal">Frontal</option>
+                       <option value="Weave">Weave</option>
+                       <option value="Ponytail">Ponytail</option>
+                       <option value="Service">Service (Installation)</option>
+                     </optgroup>
+                     <optgroup label="Sneakers & Clothing">
+                       <option value="Sneakers">Sneakers (Direct Stock)</option>
+                       <option value="Clothing">Clothing / Apparel</option>
+                     </optgroup>
+                     <option value="Pro-Care">Pro-Care / Accessories</option>
+                  </select>
+                </div>
 
-               <div className="space-y-2">
-                 <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Sizes (UK7, S, 12\")</label>
-                 <input 
-                  value={newProduct.sizes}
-                  onChange={(e) => setNewProduct({...newProduct, sizes: e.target.value})}
-                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
-                 />
-               </div>
-               <div className="space-y-2">
-                 <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Colors (Black, Emerald)</label>
-                 <input 
-                  value={newProduct.colors}
-                  onChange={(e) => setNewProduct({...newProduct, colors: e.target.value})}
-                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
-                 />
-               </div>
+                {newProduct.category !== "Service" && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Sale Price (R)</label>
+                      <input 
+                       type="number"
+                       required
+                       value={newProduct.price}
+                       onChange={(e) => setNewProduct({...newProduct, price: parseInt(e.target.value)})}
+                       className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Original Price / RRP (R)</label>
+                      <input 
+                       type="number"
+                       value={newProduct.original_price}
+                       onChange={(e) => setNewProduct({...newProduct, original_price: parseInt(e.target.value)})}
+                       className="w-full px-6 py-4 bg-brand-obsidian border border-emerald-500/10 rounded-2xl focus:border-emerald-500/30 outline-none text-white" 
+                       placeholder="e.g. 2499 (Market Price)"
+                      />
+                    </div>
+                  </>
+                )}
 
-               <div className="col-span-full space-y-2">
-                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Description</label>
-                  <textarea 
-                    rows={2}
-                    value={newProduct.description}
-                    onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
-                    className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white resize-none" 
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Product Media</label>
+                  <div className="relative group/upload">
+                    <input 
+                     type="file"
+                     accept="image/*"
+                     onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className="w-full px-6 py-4 bg-brand-obsidian border border-dashed border-white/10 rounded-2xl group-hover/upload:border-amber-500/50 transition-all text-center">
+                       <span className="text-xs text-white/40 group-hover/upload:text-amber-500 transition-colors">
+                         {imageFile ? imageFile.name : 'Click to Upload Product Image'}
+                       </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {newProduct.category !== "Service" && (
+                  <>
+                    <div className="space-y-2">
+                       <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Stock Quantity</label>
+                       <input 
+                        type="number"
+                        value={newProduct.stock_count}
+                        onChange={(e) => setNewProduct({...newProduct, stock_count: parseInt(e.target.value)})}
+                        className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
+                       />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Sizes (Comma separated)</label>
+                      <input 
+                       value={Array.isArray(newProduct.sizes) ? newProduct.sizes.join(", ") : (newProduct.sizes || "")}
+                       onChange={(e) => setNewProduct({...newProduct, sizes: e.target.value.split(",").map(s => s.trim()).filter(s => s !== "")})}
+                       className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Colors (Multi-select)</label>
+                      <ColorPicker 
+                       selected={newProduct.colors} 
+                       onChange={(colors) => setNewProduct({...newProduct, colors: colors})} 
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="col-span-full space-y-2">
+                   <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Description</label>
+                   <textarea 
+                     rows={2}
+                     value={newProduct.description}
+                     onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                     className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white resize-none" 
+                   />
+                </div>
+
+                <div className="col-span-full space-y-2">
+                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Affiliate Link (Optional)</label>
+                  <input 
+                   value={newProduct.affiliate_link}
+                   onChange={(e) => setNewProduct({...newProduct, affiliate_link: e.target.value})}
+                   className="w-full px-6 py-4 bg-brand-obsidian border border-white/5 rounded-2xl focus:border-amber-500/50 outline-none text-white italic" 
+                   placeholder="https://..."
                   />
-               </div>
+                </div>
 
-               <div className="col-span-full space-y-2">
-                 <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Affiliate Link (Optional)</label>
-                 <input 
-                  value={newProduct.affiliate_link}
-                  onChange={(e) => setNewProduct({...newProduct, affiliate_link: e.target.value})}
-                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/5 rounded-2xl focus:border-amber-500/50 outline-none text-white italic" 
-                  placeholder="https://..."
-                 />
-               </div>
-
-               <div className="col-span-full flex gap-4 pt-6">
-                  <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 border border-white/10 rounded-2xl text-white/40 font-bold uppercase tracking-widest text-xs hover:bg-white/5">Cancel</button>
-                  <button type="submit" disabled={isSaving} className="flex-2 py-4 bg-amber-500 text-brand-obsidian rounded-2xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
-                    {isSaving ? <Loader2 className="animate-spin w-4 h-4" /> : 'Add to Inventory'}
-                  </button>
-               </div>
-            </form>
+                <div className="col-span-full flex gap-4 pt-6">
+                   <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 border border-white/10 rounded-2xl text-white/40 font-bold uppercase tracking-widest text-xs hover:bg-white/5">Cancel</button>
+                   <button type="submit" disabled={isSaving} className="flex-2 py-4 bg-amber-500 text-brand-obsidian rounded-2xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
+                     {isSaving ? <Loader2 className="animate-spin w-4 h-4" /> : 'Add to Inventory'}
+                   </button>
+                </div>
+             </form>
           </motion.div>
         </div>
       )}
@@ -407,7 +520,7 @@ export default function InventoryManager() {
                       )}
                       <div>
                         <span className="font-serif text-lg block">{item.name}</span>
-                        {item.stock_count !== undefined && (
+                        {item.stock_count !== undefined && item.category !== 'Service' && (
                           <span className={`text-[9px] uppercase font-bold tracking-widest ${item.stock_count < 5 ? 'text-red-400' : 'text-white/20'}`}>
                             {item.stock_count} units left
                           </span>
@@ -434,11 +547,13 @@ export default function InventoryManager() {
                   </td>
                   <td className="px-10 py-8">
                     <div className="flex flex-wrap gap-1 max-w-[200px]">
-                      {item.sizes?.map(size => (
+                      {item.category !== 'Service' ? (item.sizes?.map(size => (
                         <span key={size} className="text-[9px] font-bold bg-white/5 border border-white/10 px-2 py-0.5 rounded text-white/40 uppercase">
                           {size}
                         </span>
-                      )) || <span className="text-white/10 text-[9px] uppercase tracking-widest">N/A</span>}
+                      )) || <span className="text-white/10 text-[9px] uppercase tracking-widest">N/A</span>) : (
+                        <span className="text-white/10 text-[9px] uppercase tracking-widest">Service Item</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-10 py-8">
@@ -499,35 +614,67 @@ export default function InventoryManager() {
                    onClick={() => setEditingProduct({...editingProduct, is_in_stock: !editingProduct.is_in_stock})}
                    className={`w-full px-6 py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] text-brand-obsidian transition-colors ${editingProduct.is_in_stock ? "bg-emerald-500" : "bg-white/10 text-white/20"}`}
                  >
-                   {editingProduct.is_in_stock ? 'In Stock' : 'Out of Stock'}
+                   {editingProduct.is_in_stock ? 'Open / Available' : 'Closed / Unavailable'}
                  </button>
                </div>
-               <div className="space-y-2">
-                 <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Sale Price (R)</label>
-                 <input 
-                  type="number"
-                  required
-                  value={editingProduct.price}
-                  onChange={(e) => setEditingProduct({...editingProduct, price: parseInt(e.target.value)})}
-                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl outline-none text-white focus:border-amber-500" 
-                 />
-               </div>
-               <div className="space-y-2">
-                 <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Original Price (R)</label>
-                 <input 
-                  type="number"
-                  value={editingProduct.original_price || 0}
-                  onChange={(e) => setEditingProduct({...editingProduct, original_price: parseInt(e.target.value)})}
-                  className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl outline-none text-white focus:border-emerald-500" 
-                 />
-               </div>
+
+                {editingProduct.category !== "Service" && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Sale Price (R)</label>
+                      <input 
+                       type="number"
+                       required
+                       value={editingProduct.price}
+                       onChange={(e) => setEditingProduct({...editingProduct, price: parseInt(e.target.value)})}
+                       className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl outline-none text-white focus:border-amber-500" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Original Price (R)</label>
+                      <input 
+                       type="number"
+                       value={editingProduct.original_price || 0}
+                       onChange={(e) => setEditingProduct({...editingProduct, original_price: parseInt(e.target.value)})}
+                       className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl outline-none text-white focus:border-emerald-500" 
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                       <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Sizes (Comma separated)</label>
+                       <input 
+                        value={Array.isArray(editingProduct.sizes) ? editingProduct.sizes.join(", ") : (editingProduct.sizes || "")}
+                        onChange={(e) => setEditingProduct({...editingProduct, sizes: e.target.value.split(",").map(s => s.trim()).filter(s => s !== "")})}
+                        className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl outline-none text-white focus:border-amber-500" 
+                       />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Colors (Multi-select)</label>
+                       <ColorPicker 
+                         selected={Array.isArray(editingProduct.colors) ? editingProduct.colors : []} 
+                         onChange={(colors) => setEditingProduct({...editingProduct, colors: colors})} 
+                       />
+                    </div>
+
+                    <div className="col-span-full space-y-2">
+                       <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Adjust Stock ({editingProduct.stock_count} Available)</label>
+                       <input 
+                        type="number"
+                        value={editingProduct.stock_count}
+                        onChange={(e) => setEditingProduct({...editingProduct, stock_count: parseInt(e.target.value)})}
+                        className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl outline-none text-white" 
+                       />
+                    </div>
+                  </>
+                )}
+
                <div className="col-span-full space-y-2">
-                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Adjust Stock ({editingProduct.stock_count} Available)</label>
-                  <input 
-                   type="number"
-                   value={editingProduct.stock_count}
-                   onChange={(e) => setEditingProduct({...editingProduct, stock_count: parseInt(e.target.value)})}
-                   className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl outline-none text-white" 
+                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Update Description</label>
+                  <textarea 
+                    rows={2}
+                    value={editingProduct.description || ""}
+                    onChange={(e) => setEditingProduct({...editingProduct, description: e.target.value})}
+                    className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white resize-none" 
                   />
                </div>
                <div className="col-span-full flex gap-4 pt-6">

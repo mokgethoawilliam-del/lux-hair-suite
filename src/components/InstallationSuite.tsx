@@ -34,7 +34,8 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
           .from("products")
           .select("*")
           .eq("category", "Service")
-          .eq("is_in_stock", true);
+          .order("is_in_stock", { ascending: false })
+          .order("created_at", { ascending: false });
         
         if (siteId) query = query.eq("site_id", siteId);
         
@@ -99,6 +100,11 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
                     {/* Image Aspect Ratio Box */}
                     <div className="relative aspect-[4/5] overflow-hidden">
                       <div className="absolute inset-0 bg-brand-emerald/20 group-hover:bg-transparent transition-all duration-500 z-10" />
+                      {!cat.is_in_stock && (
+                        <div className="absolute inset-0 z-30 bg-brand-obsidian/60 flex items-center justify-center backdrop-blur-[2px]">
+                          <span className="px-6 py-2 bg-white text-brand-obsidian text-[10px] font-bold uppercase tracking-widest rounded-full shadow-2xl">Sold Out / Fully Booked</span>
+                        </div>
+                      )}
                       {cat.original_price && cat.original_price > cat.price && (
                         <div className="absolute top-4 left-4 z-30 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg">
                           {Math.round(((cat.original_price - cat.price) / cat.original_price) * 100)}% OFF
@@ -138,11 +144,12 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
                           Inquiry
                         </button>
                         <button 
+                          disabled={!cat.is_in_stock}
                           onClick={() => handleBuyNow(cat)}
-                          className="py-3 bg-brand-gold text-brand-obsidian flex items-center justify-center gap-2 rounded-full transition-all duration-300 font-bold text-xs shadow-lg shadow-brand-gold/10"
+                          className="py-3 bg-brand-gold text-brand-obsidian flex items-center justify-center gap-2 rounded-full transition-all duration-300 font-bold text-xs shadow-lg shadow-brand-gold/10 disabled:opacity-20 disabled:grayscale"
                         >
                           <ShoppingCart className="w-4 h-4" />
-                          Book Now
+                          {cat.is_in_stock ? 'Book Now' : 'Sold Out'}
                         </button>
                       </div>
                     </div>

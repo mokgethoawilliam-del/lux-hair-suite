@@ -15,6 +15,7 @@ export default function AdminSettings() {
     admin_name: "",
     store_name: "",
     about_us: "",
+    cal_link: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -29,6 +30,7 @@ export default function AdminSettings() {
         admin_name: s.admin_name || "",
         store_name: s.store_name || "",
         about_us: s.about_us || "",
+        cal_link: s.cal_link || "",
       }))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -48,6 +50,7 @@ export default function AdminSettings() {
       const metaToSync: Record<string, string> = { business_focus: settings.business_focus };
       if (settings.store_name) metaToSync.brand_name = settings.store_name;
       if (settings.about_us) metaToSync.about_us = settings.about_us;
+      if (settings.cal_link) metaToSync.cal_link = settings.cal_link;
       
       await updateSiteMetadata(metaToSync);
 
@@ -256,6 +259,26 @@ export default function AdminSettings() {
           <p className="text-[9px] text-white/20 italic tracking-wide">
             ✦ Your story will appear in the 'About' section of your landing page. Keep it authentic.
           </p>
+        </div>
+
+        {/* Scheduling Sync: Cal.com & Gmail */}
+        <div className="col-span-full pt-10 pb-4 border-t border-white/5">
+          <h3 className="text-xl font-serif text-white mb-2 italic">Power <span className="text-emerald-500">Scheduler</span></h3>
+          <p className="text-white/30 text-[10px] uppercase tracking-widest font-bold">Native Cal.com & Gmail Sync</p>
+        </div>
+        <div className="col-span-full space-y-4">
+           <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Cal.com Event Link (Gmail / Google Sync)</label>
+           <div className="flex gap-4">
+             <input 
+               value={settings.cal_link}
+               onChange={(e) => setSettings({...settings, cal_link: e.target.value})}
+               placeholder="e.g. your-username/installation"
+               className="flex-1 px-8 py-5 bg-[#0f1117] border border-white/10 rounded-[32px] focus:border-emerald-500 outline-none text-white transition-all text-sm" 
+             />
+           </div>
+           <p className="text-[9px] text-white/20 italic ml-4">
+             Paste your Cal.com event link here to replace the internal system with professional scheduling.
+           </p>
         </div>
       </motion.div>
 

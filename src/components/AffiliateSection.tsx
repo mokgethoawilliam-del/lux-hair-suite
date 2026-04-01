@@ -24,7 +24,13 @@ export default function AffiliateSection({ siteId }: { siteId?: string }) {
   useEffect(() => {
     async function load() {
       try {
-        let query = supabase.from("products").select("*").eq("category", "Pro-Care").eq("is_in_stock", true);
+        let query = supabase
+          .from("products")
+          .select("*")
+          .eq("category", "Pro-Care")
+          .order("is_in_stock", { ascending: false })
+          .order("created_at", { ascending: false });
+        
         if (siteId) query = query.eq("site_id", siteId);
         
         const { data } = await query;
@@ -68,6 +74,11 @@ export default function AffiliateSection({ siteId }: { siteId?: string }) {
               className="group flex flex-col items-center bg-white/[0.02] p-8 rounded-3xl border border-white/5 hover:border-brand-gold/10 transition-all"
             >
               <div className="relative w-40 h-40 mb-8 overflow-hidden rounded-2xl">
+                {!product.is_in_stock && (
+                  <div className="absolute inset-0 z-30 bg-brand-obsidian/60 flex items-center justify-center backdrop-blur-[2px]">
+                    <span className="px-4 py-1 bg-white text-brand-obsidian text-[8px] font-bold uppercase tracking-widest rounded-full shadow-2xl text-center">Coming Soon</span>
+                  </div>
+                )}
                 <img 
                   src={product.image_url} 
                   alt={product.name}
@@ -87,12 +98,12 @@ export default function AffiliateSection({ siteId }: { siteId?: string }) {
               </p>
 
               <a 
-                href={product.affiliate_link} 
+                href={product.is_in_stock ? product.affiliate_link : '#'} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="w-full py-4 bg-brand-obsidian border border-white/10 rounded-xl flex items-center justify-center gap-2 text-sm font-medium hover:bg-white/10 hover:border-white/20 transition-all uppercase tracking-widest text-xs"
+                className={`w-full py-4 bg-brand-obsidian border border-white/10 rounded-xl flex items-center justify-center gap-2 text-sm font-medium hover:bg-white/10 hover:border-white/20 transition-all uppercase tracking-widest text-xs ${!product.is_in_stock ? 'opacity-20 pointer-events-none' : ''}`}
               >
-                Buy On Takealot <ExternalLink className="w-3 h-3" />
+                {product.is_in_stock ? 'Buy On Takealot' : 'Unavailable'} <ExternalLink className="w-3 h-3" />
               </a>
               
               <span className="mt-4 text-[9px] text-white/20 uppercase tracking-tighter">

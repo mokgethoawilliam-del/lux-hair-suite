@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar as CalendarIcon, Clock, CheckCircle2, Loader2, X, ChevronRight, ArrowLeft } from "lucide-react";
-import { createBooking, supabase } from "@/lib/supabase";
+import { createBooking, supabase, getSiteMetadata } from "@/lib/supabase";
+import Cal, { getCalApi } from "@calcom/embed-react";
 
 interface BookingCalendarProps {
   siteId: string;
@@ -20,6 +21,8 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [calLink, setCalLink] = useState("");
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   
   const [customer, setCustomer] = useState({
     name: "",
@@ -27,8 +30,37 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
     email: "",
     notes: ""
   });
-
   const slots = ["09:00", "11:00", "13:00", "15:00", "17:00"];
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // 1. Fetch Professional Scheduler link
+    getSiteMetadata(siteId).then(meta => {
+      if (meta.cal_link) setCalLink(meta.cal_link);
+    });
+
+    // 2. Setup Cal.com UI theme
+    (async () => {
+      const cal = await getCalApi();
+      cal("ui", { theme: "dark", styles: { branding: { brandColor: "#D4AF37" } }, hideEventTypeDetails: false, layout: "month_view" });
+    })();
+  }, [isOpen, siteId]);
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    // 3. Fetch taken slots for this date (Custom Calendar Stability)
+    supabase.from("bookings").select("slot_start")
+      .eq("site_id", siteId)
+      .gte("slot_start", `${selectedDate}T00:00:00`)
+      .lte("slot_start", `${selectedDate}T23:59:59`)
+      .then(({ data }) => {
+        if (data) {
+          const times = data.map(b => new Date(b.slot_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+          setBookedSlots(times);
+        }
+      });
+  }, [selectedDate, siteId]);
 
   const handleBook = async () => {
     setLoading(true);
@@ -146,28 +178,44 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
                     </div>
 
                     <div className="space-y-3">
-                       <label className="text-[10px] uppercase font-bold text-white/20 tracking-wider">Pick Your Hour</label>
-                       <div className="grid grid-cols-3 gap-2">
-                          {slots.map(s => (
-                             <button
-                               key={s}
-                               onClick={() => setSelectedTime(s)}
-                               className={`h-11 rounded-xl text-xs font-bold transition-all border ${selectedTime === s ? "bg-brand-gold/10 border-brand-gold text-brand-gold shadow-lg" : "bg-white/[0.02] border-white/5 text-white/40 hover:border-white/20"}`}
-                             >
-                               {s}
-                             </button>
-                          ))}
-                       </div>
+                      <label className="text-[10px] uppercase font-bold text-white/20 tracking-wider">Pick Your Hour</label>
+                      {calLink ? (
+                        <div className="p-8 border border-emerald-500/20 bg-emerald-500/5 rounded-[32px] text-center space-y-4">
+                           <p className="text-[10px] uppercase font-bold text-emerald-500 tracking-widest">Power Scheduler Activated</p>
+                           <h3 className="text-xl font-serif text-white italic">Gmail Sync Ready</h3>
+                           <Cal 
+                             calLink={calLink} 
+                             style={{ width: "100%", height: "450px", overflow: "scroll" }}
+                             config={{ layout: "month_view", theme: "dark" }}
+                           />
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-3 gap-2">
+                           {slots.map(s => (
+                              <button
+                                key={s}
+                                type="button"
+                                disabled={bookedSlots.includes(s)}
+                                onClick={() => setSelectedTime(s)}
+                                className={`h-11 rounded-xl text-xs font-bold transition-all border ${selectedTime === s ? "bg-brand-gold/10 border-brand-gold text-brand-gold shadow-lg" : bookedSlots.includes(s) ? "bg-white/[0.01] border-white/5 text-white/10 cursor-not-allowed line-through" : "bg-white/[0.02] border-white/5 text-white/40 hover:border-white/20"}`}
+                              >
+                                {s} {bookedSlots.includes(s) && "(Taken)"}
+                              </button>
+                           ))}
+                        </div>
+                      )}
                     </div>
                  </div>
 
-                 <button
-                   disabled={!selectedDate || !selectedTime}
-                   onClick={() => setStep(2)}
-                   className="w-full h-16 bg-brand-gold text-brand-obsidian font-bold rounded-[24px] shadow-xl shadow-brand-gold/10 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-30 flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
-                 >
-                   Confirm Slot <ChevronRight className="w-4 h-4" />
-                 </button>
+                 {!calLink && (
+                   <button
+                     disabled={!selectedDate || !selectedTime}
+                     onClick={() => setStep(2)}
+                     className="w-full h-16 bg-brand-gold text-brand-obsidian font-bold rounded-[24px] shadow-xl shadow-brand-gold/10 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-30 flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+                   >
+                     Confirm Slot <ChevronRight className="w-4 h-4" />
+                   </button>
+                 )}
                </motion.div>
              ) : (
                <motion.div 
