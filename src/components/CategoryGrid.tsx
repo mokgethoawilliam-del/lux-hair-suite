@@ -62,6 +62,7 @@ export default function CategoryGrid({ siteId }: { siteId?: string }) {
           .from("products")
           .select("*")
           .neq("category", "Service")
+          .neq("category", "Gallery")
           .order("is_in_stock", { ascending: false })
           .order("created_at", { ascending: false })
           .limit(12);

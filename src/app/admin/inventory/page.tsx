@@ -260,6 +260,7 @@ export default function InventoryManager() {
       const { data, error } = await supabase
         .from("products")
         .select("*")
+        .neq("category", "Gallery")
         .order("created_at", { ascending: false });
       
       if (error) throw error;
