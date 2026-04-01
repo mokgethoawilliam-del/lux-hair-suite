@@ -27,7 +27,7 @@ const DOCS = [
     category: "Advanced Features",
     icon: Globe,
     articles: [
-      { id: "domain", title: "Connecting a Professional Domain", content: "Step-by-step DNS guide for your custom domain. Point your A records and CNAME to KasiVault's high-speed servers." },
+      { id: "domain", title: "Connecting a Professional Domain", content: "Step-by-step DNS guide for your custom domain. Point your A records and CNAME to Kasi BusinessHub high-speed servers." },
       { id: "bookings", title: "Mastering the Gig Radar", content: "Configure real-time booking alerts and manage your calendar for service-based commerce." },
     ]
   }

@@ -59,7 +59,7 @@ export default function AdminOrders() {
       date: new Date(order.created_at).toLocaleDateString(),
       storeName: appSettings?.store_name || "Store",
       adminName: appSettings?.admin_name || "Admin",
-      saasName: "KasiVault SaaS"
+      saasName: "Kasi BusinessHub"
     });
   };
 
@@ -69,8 +69,8 @@ export default function AdminOrders() {
     <div className="space-y-12">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-serif mb-2 text-white">Order <span className="text-amber-500 italic">Vault</span></h1>
-          <p className="text-white/30 text-sm font-medium tracking-widest uppercase">SALES & DELIVERY TRACKING · KASIVAULT</p>
+          <h1 className="text-4xl font-serif mb-2 text-white">Sales <span className="text-indigo-400 italic">Radar</span></h1>
+          <p className="text-white/30 text-sm font-medium tracking-widest uppercase text-indigo-400/40">SALES & DELIVERY TRACKING · KASI BUSINESSHUB</p>
         </div>
         
         <button 

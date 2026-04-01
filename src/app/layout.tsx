@@ -13,8 +13,8 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Lux Hair Suite | Premium Hair & Installations",
-  description: "The ultimate destination for luxury Frontals, Ponytails, Weaves, and professional hair services.",
+  title: "Kagiso Hair Suite | Premium Hair & Installations",
+  description: "Bespoke destination for luxury Frontals, Ponytails, Weaves, and professional hair services powered by Kasi BusinessHub.",
 };
 
 // Force all pages to render dynamically so Supabase env vars are available at runtime

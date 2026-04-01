@@ -35,8 +35,9 @@ const navItems = [
   { icon: ShoppingBag, label: "Orders & Sales", href: "/admin/orders" },
   { icon: ImageIcon, label: "Gallery", href: "/admin/gallery" },
   { icon: PenSquare, label: "Site Editor", href: "/admin/editor" },
+  { icon: Shield, label: "Secured Vault", href: "/admin/vault" },
   { icon: Settings, label: "Settings", href: "/admin/settings" },
-  { icon: Shield, label: "Help Center", href: "/admin/docs" },
+  { icon: ExternalLink, label: "Help Center", href: "/admin/docs" },
 ];
 
 function Clock() {
@@ -101,10 +102,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Brand */}
         <div className="px-6 pt-8 pb-6 border-b border-white/[0.06]">
           <div className="flex items-center gap-3 mb-1">
-            <div className="p-2 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg shadow-lg shadow-amber-500/20">
-               <img src="/kasivault-logo.png" alt="KasiVault" className="w-5 h-5 object-contain invert" />
+            <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-lg shadow-lg shadow-indigo-500/20">
+               <Shield className="w-5 h-5 text-white" />
             </div>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-amber-500 font-bold">KasiVault SaaS</p>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-indigo-400 font-bold">Kasi BusinessHub</p>
           </div>
           <p className="text-lg font-bold text-white truncate">{profile.store_name}</p>
         </div>

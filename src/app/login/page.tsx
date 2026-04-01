@@ -42,7 +42,7 @@ function LoginContent() {
             <Lock className="w-8 h-8 text-brand-gold" />
           </div>
           <h1 className="text-3xl font-serif text-white mb-2">Admin <span className="text-brand-gold italic">Login</span></h1>
-          <p className="text-white/30 text-[10px] uppercase tracking-widest font-bold">Secure Access for Lux Hair Suite</p>
+          <p className="text-white/30 text-[10px] uppercase tracking-widest font-bold">Secure Access for Kagiso Hair Suite</p>
         </div>
 
         {error && (
@@ -61,7 +61,7 @@ function LoginContent() {
                 name="email"
                 required
                 className="w-full pl-14 pr-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-brand-gold/50 outline-none transition-all text-white"
-                placeholder="owner@luxhair.com"
+                placeholder="owner@kagisohair.com"
               />
             </div>
           </div>

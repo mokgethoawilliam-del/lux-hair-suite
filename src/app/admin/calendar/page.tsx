@@ -8,6 +8,8 @@ import {
   CheckCircle2, Loader2, Filter, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { fetchBookings, supabase } from "@/lib/supabase";
+import { generateProfessionalReceipt } from "@/lib/pdf-service";
+import { Download } from "lucide-react";
 
 interface Booking {
   id: string;
@@ -28,6 +30,7 @@ export default function GigRadarPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
+  const [newGigAlert, setNewGigAlert] = useState<Booking | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -47,10 +50,15 @@ export default function GigRadarPage() {
       .channel("bookings-realtime")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "bookings" },
+        { event: "INSERT", schema: "public", table: "bookings" },
         (payload) => {
-          console.log("Realtime Gig Alert:", payload);
-          load(); // Refresh the list
+          console.log("Incoming Gig Detected:", payload);
+          setNewGigAlert(payload.new as Booking);
+          load(); // Refresh the grid
+          
+          // Play Industrial Alert sound if needed or handle notifications
+          // Auto-clear alert after 5s
+          setTimeout(() => setNewGigAlert(null), 8000);
         }
       )
       .subscribe();
@@ -71,7 +79,41 @@ export default function GigRadarPage() {
   }, {});
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 relative">
+      {/* Real-time Alert Overlay */}
+      <AnimatePresence>
+        {newGigAlert && (
+          <motion.div
+            initial={{ opacity: 0, y: -40, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: -40, x: "-50%" }}
+            className="fixed top-12 left-1/2 z-[100] w-full max-w-md px-6"
+          >
+             <div className="bg-indigo-600 border border-indigo-400 p-6 rounded-[24px] shadow-2xl shadow-indigo-600/40 flex items-center justify-between text-white overflow-hidden relative group">
+                <div className="relative z-10 flex items-center gap-4">
+                  <div className="p-3 bg-white/20 rounded-xl animate-pulse">
+                    <AlertCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold uppercase tracking-tight">Incoming Gig detected!</h4>
+                    <p className="text-[10px] text-indigo-100/60 uppercase tracking-widest font-bold">Radar Synchronised</p>
+                  </div>
+                </div>
+                <div className="relative z-10">
+                   <button 
+                     onClick={() => setNewGigAlert(null)}
+                     className="p-2 hover:bg-white/10 rounded-lg transition-all"
+                   >
+                     <CheckCircle2 className="w-4 h-4" />
+                   </button>
+                </div>
+                {/* Background Decor */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
@@ -177,9 +219,26 @@ export default function GigRadarPage() {
                        <p className="text-xs font-serif font-bold text-white opacity-40 italic">
                          EST VAL: <span className="not-italic text-white">R {booking.products?.price || '---'}</span>
                        </p>
-                       <button className="p-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg hover:bg-indigo-500 hover:text-white transition-all">
-                          <CheckCircle2 className="w-4 h-4" />
-                       </button>
+                       <div className="flex gap-2">
+                         <button 
+                           onClick={() => generateProfessionalReceipt({
+                             id: booking.id,
+                             date: new Date(booking.slot_start).toLocaleDateString(),
+                             customer_name: booking.customer_name,
+                             customer_phone: booking.customer_phone,
+                             service_name: booking.products?.name || "Bespoke Service",
+                             price: booking.products?.price || 0,
+                             payment_status: booking.status === 'Confirmed' ? 'Paid' : 'Pending',
+                             brand_name: "Kagiso Hair Suite"
+                           })}
+                           className="p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all text-white/40 hover:text-white"
+                         >
+                            <Download className="w-4 h-4" />
+                         </button>
+                         <button className="p-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg hover:bg-indigo-500 hover:text-white transition-all">
+                            <CheckCircle2 className="w-4 h-4" />
+                         </button>
+                       </div>
                     </div>
 
                     {/* Decorative Gradient */}
