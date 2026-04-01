@@ -172,10 +172,24 @@ export async function createOrder(orderData: {
 
 // 2. Settings Management
 export async function getAdminSite() {
-  // In a real multi-tenant app, this would check the admin's assigned site.
-  // For this version, we fetch the first site or the 'default' one.
-  const { data } = await supabase.from("sites").select("id").limit(1).single();
-  return data?.id;
+  try {
+    // 1. Try to resolve via host if in browser
+    if (typeof window !== "undefined") {
+      const host = window.location.hostname;
+      if (host.includes(".vercel.app") || host.includes("localhost")) {
+        const slug = host.split(".")[0];
+        const { data: site } = await supabase.from("sites").select("id").eq("subdomain_slug", slug).single();
+        if (site) return site.id;
+      }
+    }
+
+    // 2. Fallback: Fetch the first available site
+    const { data } = await supabase.from("sites").select("id").limit(1).single();
+    return data?.id;
+  } catch (err) {
+    console.error("Error identifying admin site:", err);
+    return null;
+  }
 }
 
 export async function getAppSettings(siteId?: string) {
