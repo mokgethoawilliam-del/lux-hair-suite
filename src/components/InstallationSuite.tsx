@@ -30,11 +30,12 @@ export default function InstallationSuite({ siteId }: { siteId?: string }) {
   useEffect(() => {
     async function load() {
       try {
+        const { resolveSiteId, getSiteMetadata } = await import("@/lib/supabase");
+
         // 1. Definite siteId Recovery (Self-Healing)
         let activeSiteId = siteId;
         if (!activeSiteId) {
-           const meta = await getSiteMetadata();
-           if (meta?.id) activeSiteId = meta.id;
+           activeSiteId = (await resolveSiteId()) || "";
         }
 
         // 2. Fetch Services (By Type for absolute reliability)

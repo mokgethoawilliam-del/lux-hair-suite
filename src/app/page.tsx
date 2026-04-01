@@ -26,14 +26,19 @@ export default function Home() {
   useEffect(() => {
     async function load() {
       try {
-        const { getSiteMetadata } = await import("@/lib/supabase");
-        const meta = await getSiteMetadata();
+        const { resolveSiteId, getSiteMetadata } = await import("@/lib/supabase");
+        
+        // 1. Definitive Site Resolution
+        const activeSiteId = await resolveSiteId();
+        if (activeSiteId) setSiteId(activeSiteId);
+        
+        // 2. Fetch Metadata for this specific site
+        const meta = await getSiteMetadata(activeSiteId || undefined);
         if (meta.brand_name) setBrandName(meta.brand_name);
         if (meta.about_us) setAboutUs(meta.about_us);
         if (meta.business_focus) setBusinessFocus(meta.business_focus);
-        if (meta.id) setSiteId(meta.id);
         
-        const data = await fetchGalleryImages();
+        const data = await fetchGalleryImages(activeSiteId || undefined);
         setGalleryImages(data as GalleryImage[]);
       } catch (error) {
         console.error("Error loading home data:", error);

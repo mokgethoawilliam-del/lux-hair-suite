@@ -173,21 +173,53 @@ export async function createOrder(orderData: {
 // 2. Settings Management
 export async function getAdminSite() {
   try {
-    // 1. Try to resolve via host if in browser
-    if (typeof window !== "undefined") {
-      const host = window.location.hostname;
-      if (host.includes(".vercel.app") || host.includes("localhost")) {
-        const slug = host.split(".")[0];
-        const { data: site } = await supabase.from("sites").select("id").eq("subdomain_slug", slug).single();
-        if (site) return site.id;
-      }
-    }
-
-    // 2. Fallback: Fetch the first available site
-    const { data } = await supabase.from("sites").select("id").limit(1).single();
-    return data?.id;
+    const id = await resolveSiteId();
+    return id;
   } catch (err) {
     console.error("Error identifying admin site:", err);
+    return null;
+  }
+}
+
+// 2.2 Definitive Site Resolver for Storefront
+export async function resolveSiteId() {
+  try {
+    if (typeof window === "undefined") return null;
+    
+    const host = window.location.hostname;
+    let slug = "";
+    
+    if (host.includes(".vercel.app")) {
+      slug = host.split(".")[0];
+    } else if (host === "localhost" || host === "127.0.0.1") {
+      // In local dev, we default to the primary site.
+      const { data: firstSite } = await supabase.from("sites").select("id").limit(1).single();
+      return firstSite?.id;
+    } else {
+      // Custom Domain Support
+      const { data: site } = await supabase
+        .from("sites")
+        .select("id")
+        .eq("custom_domain", host)
+        .single();
+      if (site) return site.id;
+      
+      slug = host.split(".")[0];
+    }
+    
+    if (slug) {
+      const { data: site } = await supabase
+        .from("sites")
+        .select("id")
+        .eq("subdomain_slug", slug)
+        .single();
+      if (site) return site.id;
+    }
+    
+    const { data: finalSite } = await supabase.from("sites").select("id").limit(1).single();
+    return finalSite?.id;
+  } catch (err) {
+    console.error("Error resolving siteId:", err);
     return null;
   }
 }
