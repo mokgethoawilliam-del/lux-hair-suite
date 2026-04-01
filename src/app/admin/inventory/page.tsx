@@ -25,7 +25,8 @@ interface Product {
   category: string;
   price: number;
   original_price: number | null;
-  image_url: string;
+  image_url: string; // Legacy support
+  image_urls: string[]; // New Multi-image support
   type: string;
   is_in_stock: boolean;
   stock_count: number;
@@ -65,6 +66,76 @@ const LUXURY_COLORS = [
   { name: "Sky Blue", hex: "#87ceeb" },
   { name: "Sand Dune", hex: "#c2b280" }
 ];
+
+const INDUSTRIAL_SIZES = [
+  { category: "Hair (Inches)", values: ["10\"", "12\"", "14\"", "16\"", "18\"", "20\"", "22\"", "24\"", "26\"", "28\"", "30\"", "32\"", "34\""] },
+  { category: "Sneakers (UK)", values: ["UK 3", "UK 4", "UK 5", "UK 6", "UK 7", "UK 8", "UK 9", "UK 10", "UK 11", "UK 12"] },
+  { category: "Clothing", values: ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] }
+];
+
+function SizePicker({ selected, onChange }: { selected: string[], onChange: (sizes: string[]) => void }) {
+  const [search, setSearch] = useState("");
+  
+  const toggle = (size: string) => {
+    if (selected.includes(size)) {
+      onChange(selected.filter(s => s !== size));
+    } else {
+      onChange([...selected, size]);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/20" />
+        <input 
+          type="text"
+          placeholder="Add custom size (e.g. 10ml, 500g)..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && search) {
+              e.preventDefault();
+              toggle(search);
+              setSearch("");
+            }
+          }}
+          className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] outline-none focus:border-amber-500/50"
+        />
+      </div>
+
+      <div className="max-h-48 overflow-y-auto pr-2 custom-scrollbar space-y-4 border-b border-white/5 pb-4">
+        {INDUSTRIAL_SIZES.map(group => (
+          <div key={group.category} className="space-y-2">
+            <p className="text-[8px] uppercase font-bold text-white/20 tracking-widest">{group.category}</p>
+            <div className="flex flex-wrap gap-2">
+              {group.values.map(size => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => toggle(size)}
+                  className={`px-3 py-1.5 rounded-lg border text-[9px] font-bold transition-all ${selected.includes(size) ? "border-amber-500 bg-amber-500/10 text-amber-500 shadow-[0_0_15px_-5px_#f59e0b]" : "border-white/5 bg-white/5 text-white/40 hover:border-white/20"}`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-2">
+          {selected.map(s => (
+            <span key={s} className="text-[8px] font-bold uppercase tracking-widest text-brand-obsidian bg-white/80 px-2 py-1 rounded-md">
+              {s}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ColorPicker({ selected, onChange }: { selected: string[], onChange: (colors: string[]) => void }) {
   const [search, setSearch] = useState("");
@@ -125,7 +196,7 @@ function ColorPicker({ selected, onChange }: { selected: string[], onChange: (co
                 className="w-4 h-4 rounded-full border border-white/10" 
                 style={{ backgroundColor: c.hex }}
               />
-              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-all z-20 whitespace-nowrap bg-brand-obsidian px-2 py-1 rounded text-[8px] font-bold text-amber-500 uppercase">
+              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 scale- scale-0 group-hover:scale-100 transition-all z-20 whitespace-nowrap bg-brand-obsidian px-2 py-1 rounded text-[8px] font-bold text-amber-500 uppercase">
                 {c.name}
               </div>
             </button>
@@ -154,7 +225,7 @@ export default function InventoryManager() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   // New Product State
   const [newProduct, setNewProduct] = useState({
@@ -167,7 +238,8 @@ export default function InventoryManager() {
     stock_count: 10,
     description: "",
     affiliate_link: "",
-    image_url: "",
+    image_url: "", // Legacy first image
+    image_urls: [] as string[], // Multi-image support
     sizes: [] as string[],
     colors: [] as string[]
   });
@@ -242,6 +314,7 @@ export default function InventoryManager() {
       description: "",
       affiliate_link: "",
       image_url: "",
+      image_urls: [],
       sizes: [],
       colors: []
     });
@@ -251,11 +324,13 @@ export default function InventoryManager() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      let finalImageUrl = newProduct.image_url;
+      let finalImageUrls = [...newProduct.image_urls];
 
-      if (imageFile) {
+      if (imageFiles.length > 0) {
         const { uploadImage } = await import("@/lib/supabase");
-        finalImageUrl = await uploadImage(imageFile);
+        const uploadPromises = imageFiles.map(file => uploadImage(file));
+        const uploadedUrls = await Promise.all(uploadPromises);
+        finalImageUrls = [...finalImageUrls, ...uploadedUrls];
       }
 
       // Prepare payload
@@ -264,7 +339,8 @@ export default function InventoryManager() {
         category: newProduct.category,
         price: Number(newProduct.price),
         original_price: newProduct.original_price ? Number(newProduct.original_price) : null,
-        image_url: finalImageUrl,
+        image_url: finalImageUrls[0] || "", // Primary image
+        image_urls: finalImageUrls,
         type: newProduct.type,
         description: newProduct.description,
         affiliate_link: newProduct.affiliate_link,
@@ -283,7 +359,7 @@ export default function InventoryManager() {
       setInventory([data as Product, ...inventory]);
       setIsAddModalOpen(false);
       resetNewProduct();
-      setImageFile(null);
+      setImageFiles([]);
     } catch (err: any) {
       alert(`Error: ${err.message}`);
     } finally {
@@ -296,10 +372,13 @@ export default function InventoryManager() {
     if (!editingProduct) return;
     setIsSaving(true);
     try {
-      let finalImageUrl = editingProduct.image_url;
-      if (imageFile) {
+      let finalImageUrls = Array.isArray(editingProduct.image_urls) ? [...editingProduct.image_urls] : [editingProduct.image_url].filter(Boolean);
+
+      if (imageFiles.length > 0) {
         const { uploadImage } = await import("@/lib/supabase");
-        finalImageUrl = await uploadImage(imageFile);
+        const uploadPromises = imageFiles.map(file => uploadImage(file));
+        const uploadedUrls = await Promise.all(uploadPromises);
+        finalImageUrls = [...finalImageUrls, ...uploadedUrls];
       }
 
       const payload = {
@@ -307,7 +386,8 @@ export default function InventoryManager() {
         is_in_stock: editingProduct.is_in_stock,
         price: Number(editingProduct.price),
         original_price: editingProduct.original_price ? Number(editingProduct.original_price) : null,
-        image_url: finalImageUrl,
+        image_url: finalImageUrls[0] || "",
+        image_urls: finalImageUrls,
         stock_count: Number(editingProduct.stock_count),
         description: editingProduct.description,
         sizes: Array.isArray(editingProduct.sizes) ? editingProduct.sizes : [],
@@ -324,7 +404,7 @@ export default function InventoryManager() {
       if (error) throw error;
       setInventory(inventory.map(item => item.id === data.id ? data as Product : item));
       setIsEditModalOpen(false);
-      setImageFile(null);
+      setImageFiles([]);
     } catch (err: any) {
       alert(`Error: ${err.message}`);
     } finally {
@@ -440,20 +520,35 @@ export default function InventoryManager() {
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Product Media</label>
-                  <div className="relative group/upload">
-                    <input 
-                     type="file"
-                     accept="image/*"
-                     onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    />
-                    <div className="w-full px-6 py-4 bg-brand-obsidian border border-dashed border-white/10 rounded-2xl group-hover/upload:border-amber-500/50 transition-all text-center">
-                       <span className="text-xs text-white/40 group-hover/upload:text-amber-500 transition-colors">
-                         {imageFile ? imageFile.name : 'Click to Upload Product Image'}
-                       </span>
-                    </div>
+                <div className="space-y-4 col-span-full">
+                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Industrial Gallery (Multi-Photography)</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {imageFiles.map((file, idx) => (
+                      <div key={idx} className="aspect-square bg-brand-obsidian rounded-2xl border border-white/10 overflow-hidden relative group">
+                        <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
+                        <button 
+                          type="button" 
+                          onClick={() => setImageFiles(imageFiles.filter((_, i) => i !== idx))}
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                    <label className="aspect-square bg-brand-obsidian border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-amber-500/30 transition-all text-white/10 hover:text-amber-500">
+                      <Plus className="w-6 h-6 mb-2" />
+                      <span className="text-[8px] font-bold uppercase tracking-widest">Add Angle</span>
+                      <input 
+                        type="file" 
+                        multiple 
+                        accept="image/*"
+                        className="hidden" 
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          setImageFiles([...imageFiles, ...files]);
+                        }}
+                      />
+                    </label>
                   </div>
                 </div>
                 
@@ -470,11 +565,10 @@ export default function InventoryManager() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Sizes (Comma separated)</label>
-                      <input 
-                       value={Array.isArray(newProduct.sizes) ? newProduct.sizes.join(", ") : (newProduct.sizes || "")}
-                       onChange={(e) => setNewProduct({...newProduct, sizes: e.target.value.split(",").map(s => s.trim()).filter(s => s !== "")})}
-                       className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white" 
+                      <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Industrial Sizes (UK/Inches/Cloth)</label>
+                      <SizePicker 
+                        selected={newProduct.sizes}
+                        onChange={(sizes) => setNewProduct({...newProduct, sizes})}
                       />
                     </div>
                     <div className="space-y-2">
@@ -677,23 +771,71 @@ export default function InventoryManager() {
                 </div>
 
                 {editingProduct.category !== "Service" && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Original Price (R)</label>
+                    <input 
+                     type="number"
+                     value={editingProduct.original_price || 0}
+                     onChange={(e) => setEditingProduct({...editingProduct, original_price: parseInt(e.target.value)})}
+                     className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl outline-none text-white focus:border-emerald-500" 
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-4 col-span-full">
+                  <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Industrial Gallery (Photography Angels)</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {/* Existing Images */}
+                    {editingProduct.image_urls?.map((url, idx) => (
+                      <div key={`exist-${idx}`} className="aspect-square bg-brand-obsidian rounded-2xl border border-white/10 overflow-hidden relative group">
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                        <button 
+                          type="button" 
+                          onClick={() => setEditingProduct({...editingProduct, image_urls: editingProduct.image_urls.filter((_, i) => i !== idx)})}
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                    {/* New Staged Images */}
+                    {imageFiles.map((file, idx) => (
+                      <div key={`new-${idx}`} className="aspect-square bg-brand-obsidian rounded-2xl border border-amber-500/20 overflow-hidden relative group">
+                        <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-amber-500/10 pointer-events-none" />
+                        <button 
+                          type="button" 
+                          onClick={() => setImageFiles(imageFiles.filter((_, i) => i !== idx))}
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                    <label className="aspect-square bg-brand-obsidian border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-amber-500/30 transition-all text-white/10 hover:text-amber-500">
+                      <Plus className="w-6 h-6 mb-2" />
+                      <span className="text-[8px] font-bold uppercase tracking-widest">Add Angle</span>
+                      <input 
+                        type="file" 
+                        multiple 
+                        accept="image/*"
+                        className="hidden" 
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          setImageFiles([...imageFiles, ...files]);
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {editingProduct.category !== "Service" && (
                   <>
                     <div className="space-y-2">
-                      <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Original Price (R)</label>
-                      <input 
-                       type="number"
-                       value={editingProduct.original_price || 0}
-                       onChange={(e) => setEditingProduct({...editingProduct, original_price: parseInt(e.target.value)})}
-                       className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl outline-none text-white focus:border-emerald-500" 
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                       <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Sizes (Comma separated)</label>
-                       <input 
-                        value={Array.isArray(editingProduct.sizes) ? editingProduct.sizes.join(", ") : (editingProduct.sizes || "")}
-                        onChange={(e) => setEditingProduct({...editingProduct, sizes: e.target.value.split(",").map(s => s.trim()).filter(s => s !== "")})}
-                        className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl outline-none text-white focus:border-amber-500" 
+                       <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Industrial Sizes (UK/Inches/Cloth)</label>
+                       <SizePicker 
+                         selected={Array.isArray(editingProduct.sizes) ? editingProduct.sizes : []} 
+                         onChange={(sizes) => setEditingProduct({...editingProduct, sizes: sizes})} 
                        />
                     </div>
                     <div className="space-y-2">

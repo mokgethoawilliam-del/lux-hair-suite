@@ -11,7 +11,8 @@ interface HairProduct {
   name: string;
   price: number;
   original_price?: number;
-  image_url?: string;
+  image_url?: string; // Primary
+  image_urls?: string[]; // Gallery
   description?: string;
   category: string;
   is_in_stock: boolean;
@@ -19,6 +20,33 @@ interface HairProduct {
   sizes?: string[];
   colors?: string[];
 }
+
+const COLOR_MAP: Record<string, string> = {
+  "Jet Black": "#000000",
+  "Natural Black (1B)": "#2b2b2b",
+  "Chocolate Brown": "#3d2b1f",
+  "Honey Blonde": "#f5d76e",
+  "Platinum Blonde": "#f5f5f5",
+  "Copper Ginger": "#c0392b",
+  "Auburn Red": "#922b21",
+  "Burgundy Velvet": "#7f1d1d",
+  "Silver Ash": "#94a3b8",
+  "Deep Obsidian": "#111827",
+  "Electric Volt": "#ceff00",
+  "Royal Blue": "#005bb7",
+  "Infrared Red": "#ff3a3a",
+  "Hyper Purple": "#7d3cff",
+  "University Blue": "#5b92e1",
+  "Forest Green": "#1b4332",
+  "Raw Emerald": "#064e3b",
+  "Gold Dust": "#d97706",
+  "White Silk": "#f8fafc",
+  "Midnight Blue": "#1e3a8a",
+  "Cement Grey": "#7d7d7d",
+  "Peach Fuzz": "#ffbe7d",
+  "Sky Blue": "#87ceeb",
+  "Sand Dune": "#c2b280"
+};
 
 export default function CategoryGrid({ siteId }: { siteId?: string }) {
   const [products, setProducts] = useState<HairProduct[]>([]);
@@ -35,7 +63,8 @@ export default function CategoryGrid({ siteId }: { siteId?: string }) {
           .select("*")
           .neq("category", "Service")
           .order("is_in_stock", { ascending: false })
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .limit(12);
         
         if (siteId) query = query.eq("site_id", siteId);
         
@@ -103,66 +132,88 @@ export default function CategoryGrid({ siteId }: { siteId?: string }) {
               >
                 {/* Image Aspect Ratio Box */}
                 <div className="relative aspect-[4/5] overflow-hidden">
-                  <div className="absolute inset-0 bg-brand-emerald/20 group-hover:bg-transparent transition-all duration-500 z-10" />
+                  <div className="absolute top-0 right-0 p-4 z-40">
+                    <button className="w-10 h-10 bg-white/10 hover:bg-white text-white hover:text-brand-obsidian rounded-full backdrop-blur-md flex items-center justify-center transition-all">
+                      <ShoppingCart className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="absolute inset-0 bg-brand-emerald/10 group-hover:bg-transparent transition-all duration-500 z-10" />
+                  
                   {!product.is_in_stock && (
                     <div className="absolute inset-0 z-30 bg-brand-obsidian/60 flex items-center justify-center backdrop-blur-[2px]">
                       <span className="px-6 py-2 bg-white text-brand-obsidian text-[10px] font-bold uppercase tracking-widest rounded-full shadow-2xl">Sold Out</span>
                     </div>
                   )}
+
                   {product.original_price && product.original_price > product.price && (
-                    <div className="absolute top-4 left-4 z-30 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg">
-                      {Math.round(((product.original_price - product.price) / product.original_price) * 100)}% OFF
+                    <div className="absolute top-4 left-4 z-30 bg-white text-brand-obsidian text-[10px] font-black px-3 py-1.5 rounded-sm shadow-xl">
+                      -{Math.round(((product.original_price - product.price) / product.original_price) * 100)}%
                     </div>
                   )}
-                  {product.stock_count !== undefined && product.stock_count > 0 && product.stock_count < 5 && (
-                    <div className="absolute top-4 right-4 z-30 bg-amber-500 text-brand-obsidian text-[10px] font-bold px-3 py-1 rounded-full shadow-lg">
-                      ONLY {product.stock_count} LEFT
-                    </div>
-                  )}
+
+                  {/* Primary Image */}
                   <img 
                     src={product.image_url || "/placeholder.jpg"} 
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                    className={`w-full h-full object-cover transition-all duration-700 ${product.image_urls && product.image_urls.length > 1 ? 'group-hover:opacity-0' : 'group-hover:scale-110'}`} 
                   />
+
+                  {/* Secondary Image (Hover Swap) */}
+                  {product.image_urls && product.image_urls.length > 1 && (
+                    <img 
+                      src={product.image_urls[1]} 
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-all duration-700 scale-105 group-hover:scale-100" 
+                    />
+                  )}
                 </div>
 
                 {/* Content */}
                 <div className="p-8 relative z-20">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-xl uppercase tracking-tighter text-white font-serif">
+                  <div className="flex items-center justify-between gap-4 mb-4">
+                    <div className="flex items-center gap-2">
+                       {product.colors?.slice(0, 4).map(c => (
+                         <div 
+                           key={c} 
+                           className="w-3 h-3 rounded-full border border-white/10 shadow-sm" 
+                           style={{ backgroundColor: COLOR_MAP[c] || '#333' }}
+                           title={c}
+                         />
+                       ))}
+                       {(product.colors?.length || 0) > 4 && (
+                         <span className="text-[8px] font-bold text-white/30">+{product.colors!.length - 4}</span>
+                       )}
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500/60">
+                      {product.category}
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-serif mb-2 text-white leading-tight">
+                    {product.name}
+                  </h3>
+                  
+                  <div className="flex items-baseline gap-3 mb-6">
+                    <span className="text-2xl font-serif text-white">
                       R {product.price}
                     </span>
                     {product.original_price && product.original_price > product.price && (
-                      <span className="text-xs text-white/30 line-through decoration-red-500/50">
+                      <span className="text-sm text-white/20 line-through decoration-white/10">
                         R {product.original_price}
                       </span>
                     )}
                   </div>
-                  <h3 className="text-2xl font-serif mb-2 text-white">
-                    {product.name}
-                  </h3>
                   
-                  {/* Variants Preview */}
-                  {((product.sizes?.length || 0) > 0 || (product.colors?.length || 0) > 0) && (
-                    <div className="flex flex-col gap-2 mb-4">
-                       {/* Sizes */}
-                       {(product.sizes?.length || 0) > 0 && (
-                         <div className="flex flex-wrap gap-1">
-                            {product.sizes?.slice(0, 3).map(s => (
-                              <span key={s} className="text-[8px] font-bold px-1.5 py-0.5 rounded border border-white/10 text-white/30 uppercase">{s}</span>
-                            ))}
-                            {(product.sizes?.length || 0) > 3 && <span className="text-[8px] text-white/20">+{product.sizes!.length - 3}</span>}
-                         </div>
-                       )}
-                       {/* Colors */}
-                       {(product.colors?.length || 0) > 0 && (
-                         <div className="flex flex-wrap gap-1">
-                            {product.colors?.slice(0, 5).map(c => (
-                              <div key={c} className="w-2 h-2 rounded-full bg-white/20 border border-white/5" title={c} />
-                            ))}
-                            {(product.colors?.length || 0) > 5 && <span className="text-[8px] text-white/20">+{product.colors!.length - 5}</span>}
-                         </div>
-                       )}
+                  {/* Sizes Preview */}
+                  {(product.sizes?.length || 0) > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-6">
+                      {product.sizes?.slice(0, 4).map(s => (
+                        <span key={s} className="text-[9px] font-bold px-2 py-1 bg-white/5 border border-white/5 text-white/40 uppercase rounded">
+                          {s}
+                        </span>
+                      ))}
+                      {(product.sizes?.length || 0) > 4 && <span className="text-[9px] text-white/20 ml-1">+{product.sizes!.length - 4}</span>}
                     </div>
                   )}
 
