@@ -7,7 +7,7 @@ import {
   Phone, Mail, MessageSquare, AlertCircle, 
   CheckCircle2, Loader2, Filter, ChevronLeft, ChevronRight
 } from "lucide-react";
-import { fetchBookings, supabase } from "@/lib/supabase";
+import { fetchBookings, updateBookingStatus, supabase } from "@/lib/supabase";
 import { generateProfessionalReceipt } from "@/lib/pdf-service";
 import { Download } from "lucide-react";
 
@@ -31,6 +31,17 @@ export default function GigRadarPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
   const [newGigAlert, setNewGigAlert] = useState<Booking | null>(null);
+
+  const handleComplete = async (id: string) => {
+    // Optimistic UI Update
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "Completed" } : b));
+    try {
+      await updateBookingStatus(id, "Completed");
+    } catch (err) {
+      console.error("Fulfillment Error:", err);
+      alert("Failed to update gig status.");
+    }
+  };
 
   useEffect(() => {
     async function load() {
@@ -235,7 +246,10 @@ export default function GigRadarPage() {
                          >
                             <Download className="w-4 h-4" />
                          </button>
-                         <button className="p-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg hover:bg-indigo-500 hover:text-white transition-all">
+                         <button 
+                           onClick={() => handleComplete(booking.id)}
+                           className="p-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg hover:bg-indigo-500 hover:text-white transition-all"
+                         >
                             <CheckCircle2 className="w-4 h-4" />
                          </button>
                        </div>

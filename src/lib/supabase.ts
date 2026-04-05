@@ -343,6 +343,18 @@ export async function createBooking(bookingData: {
   return data;
 }
 
+export async function updateBookingStatus(id: string, status: string) {
+  const { data, error } = await supabase
+    .from("bookings")
+    .update({ status })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function fetchLeads(siteId?: string) {
   const activeSiteId = siteId || await getAdminSite();
   let query = supabase.from("leads").select("*");

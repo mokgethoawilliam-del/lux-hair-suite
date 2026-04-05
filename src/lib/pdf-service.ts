@@ -1,6 +1,3 @@
-import { jsPDF } from "jspdf";
-import "jspdf-autotable";
-
 interface ReceiptData {
   id: string;
   date: string;
@@ -12,7 +9,11 @@ interface ReceiptData {
   brand_name?: string;
 }
 
-export const generateProfessionalReceipt = (data: ReceiptData) => {
+export const generateProfessionalReceipt = async (data: ReceiptData) => {
+  // Dynamic imports to prevent Next.js SSR "window is not defined" crashes
+  const { jsPDF } = await import("jspdf");
+  await import("jspdf-autotable");
+  
   const doc = new jsPDF() as any;
   const brand = data.brand_name || "Kagiso Hair Suite";
 

@@ -34,18 +34,40 @@ export default function TrackOrderPage() {
     setLoading(true);
     setResults(null);
     try {
-      const { data, error } = await supabase
+      // 1. Fetch Installations (Bookings)
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
-        .select(`
-          *,
-          products (name, price)
-        `)
+        .select(`*, products (name, price)`)
         .eq("site_id", site.id)
-        .or(`customer_phone.eq.${query},customer_email.eq.${query}`)
-        .order("created_at", { ascending: false });
+        .or(`customer_phone.eq.${query},customer_email.eq.${query}`);
 
-      if (error) throw error;
-      setResults(data || []);
+      if (bookingsError) throw bookingsError;
+
+      // 2. Fetch Customer Orders
+      const { data: customerData } = await supabase
+        .from("customers")
+        .select("id")
+        .eq("site_id", site.id)
+        .or(`whatsapp_number.eq.${query},email.eq.${query}`);
+
+      let ordersData: any[] = [];
+      if (customerData && customerData.length > 0) {
+        const customerIds = customerData.map((c: any) => c.id);
+        const { data: oData } = await supabase
+          .from("orders")
+          .select(`*, products (name, price)`)
+          .in("customer_id", customerIds);
+        
+        if (oData) ordersData = oData;
+      }
+
+      // 3. Unified Timeline
+      const unified = [
+        ...(bookingsData || []).map(b => ({ ...b, type: 'Booking' })),
+        ...ordersData.map(o => ({ ...o, type: 'Order' }))
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setResults(unified);
     } catch (err) {
       console.error("Search error:", err);
       alert("Radar search failed. Please verify your contact details.");
@@ -87,10 +109,10 @@ export default function TrackOrderPage() {
                <div className="p-3 bg-indigo-500/10 rounded-2xl border border-indigo-500/20">
                   <Package className="w-6 h-6 text-indigo-400" />
                </div>
-               <h1 className="text-4xl md:text-5xl font-serif font-bold italic tracking-tight">Gig <span className="text-white/20 not-italic">Tracker</span></h1>
+               <h1 className="text-4xl md:text-5xl font-serif font-bold italic tracking-tight">Fulfillment <span className="text-white/20 not-italic">Tracker</span></h1>
              </div>
              <p className="text-sm text-white/40 max-w-lg leading-relaxed">
-               Locate your live bookings and download official receipts. Enter your WhatsApp number or Email address to sync with our Radar.
+               Locate your live installations and hair product orders. Enter your WhatsApp number or Email address to sync with our Radar.
              </p>
           </motion.div>
         </div>
@@ -139,73 +161,81 @@ export default function TrackOrderPage() {
                 <div className="py-24 text-center space-y-4">
                    <AlertCircle className="w-12 h-12 text-white/10 mx-auto" />
                    <div>
-                     <p className="text-sm font-bold uppercase tracking-widest text-white/40">No Gigs Found</p>
-                     <p className="text-[10px] text-white/20 italic">If you just booked, please allow a micro-second for the Radar to sync.</p>
+                     <p className="text-sm font-bold uppercase tracking-widest text-white/40">No Activity Found</p>
+                     <p className="text-[10px] text-white/20 italic">If you just booked or ordered, please allow a micro-second for the Radar to sync.</p>
                    </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-6">
-                   {results.map((gig) => (
-                     <motion.div
-                       key={gig.id}
-                       layout
-                       initial={{ opacity: 0, scale: 0.95 }}
-                       animate={{ opacity: 1, scale: 1 }}
-                       className="p-8 bg-white/[0.03] border border-white/[0.06] rounded-3xl hover:border-indigo-500/30 transition-all group overflow-hidden relative"
-                     >
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
-                           <div className="space-y-2">
-                              <div className="flex items-center gap-3">
-                                 <h3 className="text-xl font-serif font-bold italic">{gig.products?.name || "Bespoke Service"}</h3>
-                                 <span className={`text-[9px] px-2 py-0.5 rounded border uppercase tracking-[0.1em] font-bold ${
-                                   gig.status === 'Confirmed' ? 'bg-green-500/10 text-green-400 border-green-500/20 shadow-lg shadow-green-500/10' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                 }`}>
-                                   {gig.status}
-                                 </span>
-                              </div>
-                              <div className="flex items-center gap-4 text-[10px] text-white/40 font-bold uppercase tracking-widest">
-                                 <div className="flex items-center gap-1.5">
-                                    <Calendar className="w-3 h-3 text-indigo-400" />
-                                    {new Date(gig.slot_start).toLocaleDateString("en-ZA", { day: 'numeric', month: 'short', year: 'numeric' })}
-                                 </div>
-                                 <div className="flex items-center gap-1.5">
-                                    <Clock className="w-3 h-3 text-indigo-400" />
-                                    {new Date(gig.slot_start).toLocaleTimeString("en-ZA", { hour: '2-digit', minute: '2-digit' })}
-                                 </div>
-                              </div>
-                           </div>
-
-                           <div className="flex gap-3 w-full md:w-auto">
-                              <button 
-                                onClick={() => generateProfessionalReceipt({
-                                  id: gig.id,
-                                  date: new Date(gig.created_at).toLocaleDateString(),
-                                  customer_name: gig.customer_name,
-                                  customer_phone: gig.customer_phone,
-                                  service_name: gig.products?.name || "Bespoke Service",
-                                  price: gig.products?.price || 0,
-                                  payment_status: gig.status === 'Confirmed' ? 'Paid' : 'Pending',
-                                  brand_name: site?.name || "Kagiso Hair Suite"
-                                })}
-                                className="flex-1 md:flex-none px-6 py-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest"
-                              >
-                                <Download className="w-4 h-4" />
-                                Receipt
-                              </button>
-                              <a 
-                                href={`https://wa.me/${site?.whatsapp_number || ""}`}
-                                className="flex-1 md:flex-none px-6 py-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl hover:bg-indigo-500 hover:text-white transition-all flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest"
-                              >
-                                <MessageSquare className="w-4 h-4" />
-                                Support
-                              </a>
-                           </div>
-                        </div>
-
-                        {/* Background Decor */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-indigo-500/10 transition-all pointer-events-none" />
-                     </motion.div>
-                   ))}
+                   {results.map((item) => {
+                     const isBooking = item.type === 'Booking';
+                     const title = item.products?.name || (isBooking ? "Bespoke Service" : "Store Purchase");
+                     
+                     return (
+                       <motion.div
+                         key={item.id}
+                         layout
+                         initial={{ opacity: 0, scale: 0.95 }}
+                         animate={{ opacity: 1, scale: 1 }}
+                         className="p-8 bg-white/[0.03] border border-white/[0.06] rounded-3xl hover:border-indigo-500/30 transition-all group overflow-hidden relative"
+                       >
+                          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
+                             <div className="space-y-2">
+                                <div className="flex items-center gap-3">
+                                   <div className="px-2 py-1 bg-white/5 rounded border border-white/10">
+                                      {isBooking ? <Calendar className="w-3 h-3" /> : <Package className="w-3 h-3 text-emerald-400" />}
+                                   </div>
+                                   <h3 className="text-xl font-serif font-bold italic">{title}</h3>
+                                   <span className={`text-[9px] px-2 py-0.5 rounded border uppercase tracking-[0.1em] font-bold ${
+                                     item.status === 'Confirmed' || item.status === 'Paid' ? 'bg-green-500/10 text-green-400 border-green-500/20 shadow-lg shadow-green-500/10' : 
+                                     item.status === 'Completed' || item.status === 'Shipped' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 
+                                     'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                   }`}>
+                                     {item.status}
+                                   </span>
+                                </div>
+                                <div className="flex items-center gap-4 text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                                   <div className="flex items-center gap-1.5">
+                                      <Clock className="w-3 h-3 text-indigo-400" />
+                                      {isBooking 
+                                        ? new Date(item.slot_start).toLocaleString("en-ZA", { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                                        : new Date(item.created_at).toLocaleDateString("en-ZA", { day: 'numeric', month: 'short', year: 'numeric' })
+                                      }
+                                   </div>
+                                </div>
+                             </div>
+  
+                             <div className="flex gap-3 w-full md:w-auto">
+                                <button 
+                                  onClick={() => generateProfessionalReceipt({
+                                    id: item.id,
+                                    date: new Date(item.created_at).toLocaleDateString(),
+                                    customer_name: isBooking ? item.customer_name : "Valued Client",
+                                    service_name: title,
+                                    price: item.products?.price || item.amount || 0,
+                                    payment_status: item.status === 'Confirmed' || item.status === 'Paid' ? 'Paid' : 'Pending',
+                                    brand_name: site?.name || "Kagiso Hair Suite"
+                                  })}
+                                  className="flex-1 md:flex-none px-6 py-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest"
+                                >
+                                  <Download className="w-4 h-4" />
+                                  Receipt
+                                </button>
+                                <a 
+                                  href={`https://wa.me/${site?.whatsapp_number || ""}`}
+                                  className="flex-1 md:flex-none px-6 py-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl hover:bg-indigo-500 hover:text-white transition-all flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest"
+                                >
+                                  <MessageSquare className="w-4 h-4" />
+                                  Support
+                                </a>
+                             </div>
+                          </div>
+  
+                          {/* Background Decor */}
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-indigo-500/10 transition-all pointer-events-none" />
+                       </motion.div>
+                     );
+                   })}
                 </div>
               )}
             </motion.div>
