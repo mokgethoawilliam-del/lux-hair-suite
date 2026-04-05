@@ -288,7 +288,8 @@ export async function updateAppSettings(settings: Record<string, string>, siteId
 }
 
 export async function fetchOrders(siteId?: string) {
-  if (!siteId) return []; // Identity Guard
+  const activeSiteId = siteId || await getAdminSite();
+  if (!activeSiteId) return []; // Identity Guard
   let query = supabase
     .from("orders")
     .select(`
@@ -296,7 +297,7 @@ export async function fetchOrders(siteId?: string) {
       customers (full_name, whatsapp_number, email),
       products (name)
     `)
-    .eq("site_id", siteId); // Absolute isolation
+    .eq("site_id", activeSiteId); // Absolute isolation
   
   const { data, error } = await query.order("created_at", { ascending: false });
 
@@ -306,14 +307,15 @@ export async function fetchOrders(siteId?: string) {
 
 // 3. Booking Engine
 export async function fetchBookings(siteId?: string) {
-  if (!siteId) return []; // Identity Guard
+  const activeSiteId = siteId || await getAdminSite();
+  if (!activeSiteId) return []; // Identity Guard
   let query = supabase
     .from("bookings")
     .select(`
       *,
       products (name, price)
     `)
-    .eq("site_id", siteId); // Absolute isolation
+    .eq("site_id", activeSiteId); // Absolute isolation
   
   const { data, error } = await query.order("slot_start", { ascending: true });
 
@@ -342,8 +344,9 @@ export async function createBooking(bookingData: {
 }
 
 export async function fetchLeads(siteId?: string) {
+  const activeSiteId = siteId || await getAdminSite();
   let query = supabase.from("leads").select("*");
-  if (siteId) query = query.eq("site_id", siteId);
+  if (activeSiteId) query = query.eq("site_id", activeSiteId);
   
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw error;
