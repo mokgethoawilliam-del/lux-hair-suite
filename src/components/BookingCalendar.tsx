@@ -45,7 +45,7 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
     // 1. Fetch Professional Scheduler link & Paystack Key
     getSiteMetadata(siteId).then(meta => {
       if (meta.cal_link) setCalLink(meta.cal_link);
-      if (meta.paystack_public_key) setPaystackKey(meta.paystack_public_key);
+      setPaystackKey(meta.paystack_public_key || process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "");
     });
 
     // 2. Setup Cal.com UI theme
@@ -373,10 +373,16 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
                   </div>
 
                   <div className="space-y-3">
-                     <PaystackButton 
-                        {...paystackConfig}
-                        className="w-full h-16 bg-brand-gold text-brand-obsidian font-bold rounded-[24px] shadow-xl shadow-brand-gold/20 hover:scale-[1.05] transition-all uppercase tracking-widest text-xs"
-                     />
+                     {paystackKey ? (
+                       <PaystackButton 
+                          {...paystackConfig}
+                          className="w-full h-16 bg-brand-gold text-brand-obsidian font-bold rounded-[24px] shadow-xl shadow-brand-gold/20 hover:scale-[1.05] transition-all uppercase tracking-widest text-xs"
+                       />
+                     ) : (
+                       <button disabled className="w-full h-16 bg-red-500/10 border border-red-500/30 text-red-400 font-bold rounded-[24px] uppercase tracking-widest text-xs">
+                          Payments Offline (Configure Vault)
+                       </button>
+                     )}
                      <button onClick={() => setStep(2)} className="text-[10px] text-white/20 uppercase tracking-widest hover:text-white transition-all">
                         Change Details
                      </button>
