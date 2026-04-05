@@ -5,6 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar as CalendarIcon, Clock, CheckCircle2, Loader2, X, ChevronRight, ArrowLeft, AlertCircle } from "lucide-react";
 import { createBooking, supabase, getSiteMetadata } from "@/lib/supabase";
 import Cal, { getCalApi } from "@calcom/embed-react";
+import dynamic from 'next/dynamic';
+
+const PaystackButton = dynamic(() => import('react-paystack').then(mod => mod.PaystackButton), { ssr: false });
 
 interface BookingCalendarProps {
   siteId: string;
@@ -251,6 +254,7 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
                        <label className="text-[10px] uppercase font-bold text-white/20 tracking-wider">Select Date</label>
                        <input 
                          type="date"
+                         value={selectedDate}
                          min={new Date().toISOString().split("T")[0]}
                          onChange={(e) => setSelectedDate(e.target.value)}
                          className="w-full h-14 px-6 bg-white/[0.03] border border-white/10 rounded-2xl outline-none focus:border-brand-gold transition-all text-white font-bold"
@@ -287,7 +291,7 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
                     {checkingAvailability ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Confirm Selection <ChevronRight className="w-4 h-4" /></>}
                   </button>
                </motion.div>
-             ) : (
+             ) : step === 2 ? (
                <motion.div 
                   key="step2"
                   initial={{ opacity: 0, x: 20 }}
@@ -385,7 +389,3 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
     </div>
   );
 }
-
-// Support Component for Paystack (Dynamic Import)
-import dynamic from 'next/dynamic';
-const PaystackButton = dynamic(() => import('react-paystack').then(mod => mod.PaystackButton), { ssr: false });

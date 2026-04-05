@@ -10,6 +10,7 @@ export async function getSiteBySlug(slug: string) {
     .from("sites")
     .select("*")
     .eq("subdomain_slug", slug)
+    .limit(1)
     .single();
   
   if (error) return null;
@@ -200,6 +201,8 @@ export async function resolveSiteId() {
     // 2. Resolve via Hostname/Subdomain
     if (host.includes(".vercel.app")) {
       slug = host.split(".")[0];
+      // Industrial Override: If the root vercel app is accessed, bind to lux-hair-suite identity
+      if (slug === 'lux-hair-suite') slug = 'lux-hair-suite';
     } else if (host === "localhost" || host === "127.0.0.1") {
       const { data: firstSite } = await supabase.from("sites").select("id").limit(1).single();
       return firstSite?.id;
@@ -209,6 +212,7 @@ export async function resolveSiteId() {
         .from("sites")
         .select("id")
         .eq("custom_domain", host)
+        .limit(1)
         .single();
       if (site) return site.id;
       
@@ -220,6 +224,7 @@ export async function resolveSiteId() {
         .from("sites")
         .select("id")
         .eq("subdomain_slug", slug)
+        .limit(1)
         .single();
       if (site) return site.id;
     }
@@ -229,6 +234,7 @@ export async function resolveSiteId() {
       .from("sites")
       .select("id")
       .eq("subdomain_slug", "lux-hair-suite")
+      .limit(1)
       .single();
     if (fallbackSite) return fallbackSite.id;
     

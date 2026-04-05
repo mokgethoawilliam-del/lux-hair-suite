@@ -53,3 +53,25 @@ BEGIN
         UPDATE app_settings SET site_id = target_site_id WHERE site_id = default_site_id OR site_id IS NULL;
     END IF;
 END $$;
+
+-- 3. SCHEMA AUDIT: FIX MISSING COLUMNS
+DO $$ 
+BEGIN
+    BEGIN
+        ALTER TABLE leads ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+    EXCEPTION
+        WHEN duplicate_column THEN null;
+    END;
+
+    BEGIN
+        ALTER TABLE bookings ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+    EXCEPTION
+        WHEN duplicate_column THEN null;
+    END;
+
+    BEGIN
+        ALTER TABLE bookings ADD COLUMN status TEXT DEFAULT 'Pending';
+    EXCEPTION
+        WHEN duplicate_column THEN null;
+    END;
+END $$;
