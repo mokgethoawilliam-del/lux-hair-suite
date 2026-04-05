@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar as CalendarIcon, Clock, CheckCircle2, Loader2, X, ChevronRight, ArrowLeft, AlertCircle } from "lucide-react";
-import { createBooking, supabase, getSiteMetadata } from "@/lib/supabase";
+import { createBooking, supabase, getSiteMetadata, getAppSettings } from "@/lib/supabase";
 import Cal, { getCalApi } from "@calcom/embed-react";
 import dynamic from 'next/dynamic';
 
@@ -43,9 +43,9 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
     if (!isOpen) return;
 
     // 1. Fetch Professional Scheduler link & Paystack Key
-    getSiteMetadata(siteId).then(meta => {
+    Promise.all([getSiteMetadata(siteId), getAppSettings(siteId)]).then(([meta, settings]) => {
       if (meta.cal_link) setCalLink(meta.cal_link);
-      setPaystackKey(meta.paystack_public_key || process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "");
+      setPaystackKey(settings.paystack_public_key || meta.paystack_public_key || process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "");
     });
 
     // 2. Setup Cal.com UI theme

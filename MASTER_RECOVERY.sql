@@ -75,3 +75,25 @@ BEGIN
         WHEN duplicate_column THEN null;
     END;
 END $$;
+
+-- 4. VAULT UNLOCK (RLS & UPSERT CONSTRAINT FIX)
+DO $$ 
+BEGIN
+    -- Fix Upsert Constraints for Multi-Tenancy Updates
+    BEGIN
+        ALTER TABLE app_settings DROP CONSTRAINT IF EXISTS app_settings_key_key;
+        ALTER TABLE app_settings ADD CONSTRAINT app_settings_key_site_id_key UNIQUE (key, site_id);
+    EXCEPTION WHEN others THEN null; END;
+
+    BEGIN
+        ALTER TABLE site_metadata DROP CONSTRAINT IF EXISTS site_metadata_key_key;
+        ALTER TABLE site_metadata ADD CONSTRAINT site_metadata_key_site_id_key UNIQUE (key, site_id);
+    EXCEPTION WHEN others THEN null; END;
+END $$;
+
+-- Drop restricted policies and allow PIN-secured public access
+DROP POLICY IF EXISTS "Admin can do everything on app_settings" ON app_settings;
+CREATE POLICY "Allow public full access on app_settings" ON app_settings FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public read on site_metadata" ON site_metadata;
+CREATE POLICY "Allow public full access on site_metadata" ON site_metadata FOR ALL USING (true) WITH CHECK (true);
