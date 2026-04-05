@@ -143,7 +143,8 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
   const paystackConfig = {
     reference: (new Date()).getTime().toString(),
     email: customer.email || "bookings@kagiso.hair",
-    amount: (servicePrice / 2) * 100, // 50% in kobo
+    amount: (servicePrice / 2) * 100, // 50% in cents/kobo
+    currency: "ZAR",
     publicKey: paystackKey,
     text: "Pay 50% Deposit",
     onSuccess: () => handleBook('Confirmed'),
