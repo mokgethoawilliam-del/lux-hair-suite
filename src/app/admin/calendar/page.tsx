@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Calendar as CalendarIcon, Clock, User, 
   Phone, Mail, MessageSquare, AlertCircle, 
-  CheckCircle2, Loader2, Filter, ChevronLeft, ChevronRight
+  CheckCircle2, Loader2, Filter, ChevronLeft, ChevronRight,
+  Download, Trash2
 } from "lucide-react";
 import { fetchBookings, updateBookingStatus, supabase } from "@/lib/supabase";
-import { Download } from "lucide-react";
 
 interface Booking {
   id: string;
@@ -86,6 +86,23 @@ export default function GigRadarPage() {
     } catch (err) {
       console.error("Fulfillment Error:", err);
       alert("Failed to update gig status.");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("CRITICAL WARNING: Are you sure you want to permanently delete this gig? This action cannot be undone.")) return;
+    
+    // Optimistic UI Update
+    setBookings(prev => prev.filter(b => b.id !== id));
+    try {
+      const { error } = await supabase.from('bookings').delete().eq('id', id);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Deletion Error:", err);
+      alert("Failed to permanently delete gig. It may still exist in the database.");
+      // Rollback
+      const data = await fetchBookings();
+      setBookings(data as any);
     }
   };
 
@@ -303,14 +320,23 @@ export default function GigRadarPage() {
                        </p>
                        <div className="flex gap-2">
                          <button 
+                           onClick={() => handleDelete(booking.id)}
+                           className="p-2 bg-red-500/10 border border-red-500/20 rounded-lg hover:bg-red-500 hover:text-white transition-all text-red-400 group-hover:opacity-100 opacity-60"
+                           title="Permanently Delete Gig"
+                         >
+                            <Trash2 className="w-4 h-4" />
+                         </button>
+                         <button 
                            onClick={() => downloadReceipt(booking)}
                            className="p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all text-white/40 hover:text-white"
+                           title="Download Receipt"
                          >
                             <Download className="w-4 h-4" />
                          </button>
                          <button 
                            onClick={() => handleComplete(booking.id)}
                            className="p-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg hover:bg-indigo-500 hover:text-white transition-all"
+                           title="Mark Completed"
                          >
                             <CheckCircle2 className="w-4 h-4" />
                          </button>
