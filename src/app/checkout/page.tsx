@@ -32,6 +32,7 @@ function CheckoutContent() {
   const [customer, setCustomer] = useState({ name: "", email: "", whatsapp: "" });
   const [paystackKey, setPaystackKey] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const [deliveryZones, setDeliveryZones] = useState<any[]>([]);
   const [selectedZone, setSelectedZone] = useState<any | null>(null);
@@ -87,6 +88,7 @@ function CheckoutContent() {
     publicKey: paystackKey,
     text: "Pay Now",
     onSuccess: async (reference: { reference: string }) => {
+      setIsProcessing(true);
       try {
         await createOrder({
           customer: { full_name: customer.name, email: customer.email, whatsapp_number: customer.whatsapp },
@@ -104,10 +106,11 @@ function CheckoutContent() {
           } : undefined
         });
         alert("Payment Successful! Your order has been securely logged.");
-        // Redirect directly to the tracking portal so the customer instantly learns where to track their package
         router.push("/s/lux-hair-suite/track");
       } catch (err) {
         console.error("Error saving order:", err);
+        alert("Payment was successful, but there was an error logging your order: " + (err as any).message + ". Please contact us with your reference: " + reference.reference);
+        setIsProcessing(false);
       }
     },
     onClose: () => alert("Transaction cancelled."),

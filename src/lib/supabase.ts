@@ -153,14 +153,17 @@ export async function createOrder(orderData: {
   const activeSiteId = await getAdminSite();
   if (!activeSiteId) throw new Error("Could not resolve Site Identity for Order.");
 
-  // First, upsert the customer
+  // First, upsert the customer (Isolate by Site ID to support multi-tenancy)
   const { data: customer, error: customerError } = await supabase
     .from("customers")
-    .upsert([{ ...orderData.customer, site_id: activeSiteId }], { onConflict: "whatsapp_number" })
+    .upsert([{ ...orderData.customer, site_id: activeSiteId }], { onConflict: "site_id,whatsapp_number" })
     .select()
     .single();
 
-  if (customerError) throw customerError;
+  if (customerError) {
+    console.error("Critical: Failed to upsert customer during checkout.", customerError);
+    throw customerError;
+  }
 
   // Then, create the order
   const { data: order, error: orderError } = await supabase
