@@ -76,8 +76,9 @@ function CheckoutContent() {
           payment_reference: reference.reference,
           payment_method: 'Paystack',
         });
-        alert("Payment Successful! We will contact you on WhatsApp shortly.");
-        router.push("/");
+        alert("Payment Successful! Your order has been securely logged.");
+        // Redirect directly to the tracking portal so the customer instantly learns where to track their package
+        router.push("/s/lux-hair-suite/track");
       } catch (err) {
         console.error("Error saving order:", err);
       }

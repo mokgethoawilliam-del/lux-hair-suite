@@ -142,10 +142,13 @@ export async function createOrder(orderData: {
   payment_reference: string;
   payment_method: string;
 }) {
+  const activeSiteId = await getAdminSite();
+  if (!activeSiteId) throw new Error("Could not resolve Site Identity for Order.");
+
   // First, upsert the customer
   const { data: customer, error: customerError } = await supabase
     .from("customers")
-    .upsert([orderData.customer], { onConflict: "whatsapp_number" })
+    .upsert([{ ...orderData.customer, site_id: activeSiteId }], { onConflict: "whatsapp_number" })
     .select()
     .single();
 
@@ -155,6 +158,7 @@ export async function createOrder(orderData: {
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .insert([{
+      site_id: activeSiteId,
       customer_id: customer.id,
       product_id: orderData.product_id,
       amount: orderData.amount,
