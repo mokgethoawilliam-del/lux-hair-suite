@@ -335,6 +335,17 @@ export async function createDeliveryZone(name: string, fee: number) {
   return data;
 }
 
+export async function updateDeliveryZone(id: string, name: string, fee: number) {
+  const { data, error } = await supabase
+    .from("delivery_zones")
+    .update({ name, fee })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function deleteDeliveryZone(id: string) {
   const { error } = await supabase
     .from("delivery_zones")

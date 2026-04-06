@@ -11,6 +11,8 @@ export default function AdminLogistics() {
   const [zones, setZones] = useState<any[]>([]);
   const [newZone, setNewZone] = useState({ name: "", fee: 0 });
   const [zoneLoading, setZoneLoading] = useState(false);
+  const [editingZone, setEditingZone] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", fee: 0 });
 
   useEffect(() => {
     import("@/lib/supabase").then(({ fetchDeliveryZones }) => {
@@ -41,6 +43,19 @@ export default function AdminLogistics() {
       setZones(prev => prev.filter(z => z.id !== id));
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleSaveEdit = async (id: string) => {
+    if (!editForm.name) return;
+    try {
+      const { updateDeliveryZone } = await import("@/lib/supabase");
+      const updated = await updateDeliveryZone(id, editForm.name, Number(editForm.fee));
+      setZones(prev => prev.map(z => z.id === id ? updated : z));
+      setEditingZone(null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update delivery zone.");
     }
   };
 
@@ -93,13 +108,50 @@ export default function AdminLogistics() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {zones.map((zone) => (
                 <div key={zone.id} className="p-5 bg-white/5 border border-white/10 rounded-2xl flex flex-col justify-between group min-h-[120px] hover:border-green-500/30 transition-all">
-                   <div>
-                     <p className="text-xs font-bold uppercase tracking-widest text-white/50">{zone.name}</p>
-                     <p className="text-2xl font-serif text-brand-gold mt-2">R {zone.fee}</p>
-                   </div>
-                   <button onClick={() => handleRemoveZone(zone.id)} className="text-[10px] uppercase tracking-widest font-bold text-red-500/50 hover:text-red-500 text-left transition-colors pt-4 mt-4 border-t border-white/5">
-                     Delete Zone
-                   </button>
+                   {editingZone === zone.id ? (
+                     <div className="space-y-3">
+                       <input 
+                         value={editForm.name}
+                         onChange={e => setEditForm({...editForm, name: e.target.value})}
+                         className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-white text-xs outline-none focus:border-green-500"
+                       />
+                       <div className="flex items-center gap-2">
+                         <span className="text-white/40 text-xs mt-1">R</span>
+                         <input 
+                           type="number"
+                           value={editForm.fee}
+                           onChange={e => setEditForm({...editForm, fee: Number(e.target.value)})}
+                           className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-white text-xs outline-none focus:border-green-500"
+                         />
+                       </div>
+                       <div className="flex items-center gap-2 pt-2">
+                         <button onClick={() => handleSaveEdit(zone.id)} className="flex-1 py-2 bg-green-600 hover:bg-green-500 rounded-lg text-[10px] font-bold text-white uppercase tracking-widest transition-colors">
+                           Save
+                         </button>
+                         <button onClick={() => setEditingZone(null)} className="flex-1 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold text-white uppercase tracking-widest transition-colors">
+                           Cancel
+                         </button>
+                       </div>
+                     </div>
+                   ) : (
+                     <div className="flex flex-col h-full justify-between">
+                       <div>
+                         <p className="text-xs font-bold uppercase tracking-widest text-white/50">{zone.name}</p>
+                         <p className="text-2xl font-serif text-brand-gold mt-2">R {zone.fee}</p>
+                       </div>
+                       <div className="flex items-center justify-between pt-4 mt-4 border-t border-white/5">
+                         <button 
+                           onClick={() => { setEditingZone(zone.id); setEditForm({ name: zone.name, fee: zone.fee }); }} 
+                           className="text-[10px] uppercase tracking-widest font-bold text-indigo-400/70 hover:text-indigo-400 transition-colors"
+                         >
+                           Edit
+                         </button>
+                         <button onClick={() => handleRemoveZone(zone.id)} className="text-[10px] uppercase tracking-widest font-bold text-red-500/50 hover:text-red-500 transition-colors">
+                           Delete
+                         </button>
+                       </div>
+                     </div>
+                   )}
                 </div>
               ))}
             </div>
