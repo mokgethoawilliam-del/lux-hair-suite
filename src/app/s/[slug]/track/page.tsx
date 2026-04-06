@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { supabase, getSiteBySlug } from "@/lib/supabase";
 import { usePaystackPayment } from "react-paystack";
+import SupportChat from "@/components/SupportChat";
 
 function FulfillmentJourney({ status }: { status: string }) {
   const stages = [
@@ -291,13 +292,6 @@ export default function TrackOrderPage() {
                                   <Download className="w-4 h-4" />
                                   Receipt
                                 </button>
-                                <a 
-                                  href={`https://wa.me/${site?.whatsapp_number || ""}`}
-                                  className="flex-1 md:flex-none px-6 py-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl hover:bg-indigo-500 hover:text-white transition-all flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest"
-                                >
-                                  <MessageSquare className="w-4 h-4" />
-                                  Support
-                                </a>
                              </div>
                           </div>
   
@@ -321,7 +315,10 @@ export default function TrackOrderPage() {
         <div className="mt-24 pt-12 border-t border-white/5 text-center">
            <p className="text-[10px] text-white/20 uppercase tracking-[0.4em] font-bold">Kasi BusinessHub industrial fulfillment</p>
         </div>
+
       </div>
+
+      {site && <SupportChat siteId={site.id} />}
     </div>
   );
 }

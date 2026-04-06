@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const dynamic = 'force-dynamic';
 import { Resend } from "resend";
 import twilio from "twilio";
 import { supabase } from "@/lib/supabase"; // Use server-side admin client if possible, but we'll use the browser client for now if it works
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
 
     if (settingsError) throw settingsError;
 
-    const keys = settings.reduce((acc: any, item) => {
+    const keys = settings.reduce((acc: any, item: any) => {
       acc[item.key] = item.value;
       return acc;
     }, {});

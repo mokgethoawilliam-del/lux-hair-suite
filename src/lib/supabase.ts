@@ -3,7 +3,10 @@ import { createBrowserClient } from "@supabase/ssr";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+// Safety check for build-time environment where keys might be missing
+export const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createBrowserClient(supabaseUrl, supabaseAnonKey) 
+  : {} as any; 
 
 export async function getSiteBySlug(slug: string) {
   const { data, error } = await supabase
@@ -475,7 +478,7 @@ export async function getPlatformStats() {
     .from("orders")
     .select("amount");
   
-  const revenue = totalRevenue?.reduce((sum, order) => sum + Number(order.amount), 0) || 0;
+  const revenue = totalRevenue?.reduce((sum: number, order: { amount: number }) => sum + Number(order.amount), 0) || 0;
 
   return {
     products: products.count || 0,
@@ -484,4 +487,52 @@ export async function getPlatformStats() {
     bookings: bookings.count || 0,
     revenue: revenue
   };
+}
+
+// Support Chat Functions
+export async function getChatMessages(sessionId: string) {
+  const { data, error } = await supabase
+    .from('support_chats')
+    .select('*')
+    .eq('session_id', sessionId)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
+export async function sendChatMessage(siteId: string, sessionId: string, message: string, sender: 'customer' | 'admin', orderId?: string) {
+  const { data, error } = await supabase
+    .from('support_chats')
+    .insert([{ site_id: siteId, session_id: sessionId, message, sender, order_id: orderId }])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getActiveChats(siteId: string) {
+  const { data, error } = await supabase
+    .from('support_chats')
+    .select('*')
+    .eq('site_id', siteId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  
+  // Group by session_id and keep latest message
+  const sessions = new Map();
+  data.forEach((m: any) => {
+    if (!sessions.has(m.session_id)) {
+      sessions.set(m.session_id, m);
+    }
+  });
+  return Array.from(sessions.values());
+}
+
+export async function markChatAsRead(sessionId: string) {
+  const { error } = await supabase
+    .from('support_chats')
+    .update({ is_read: true })
+    .eq('session_id', sessionId)
+    .eq('sender', 'customer');
+  if (error) throw error;
 }

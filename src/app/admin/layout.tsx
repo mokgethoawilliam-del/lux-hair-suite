@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard, Radio, Package, ShoppingBag,
   Image as ImageIcon, PenSquare, Settings, ExternalLink,
-  User, ChevronRight, Shield, Truck,
+  User, ChevronRight, Shield, Truck, MessageSquare
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -30,13 +30,13 @@ const THEME_MAP: Record<string, { color: string; bg: string; border: string; ico
 const navItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/admin" },
   { icon: Radio, label: "Lead Radar", href: "/admin/leads" },
+  { icon: MessageSquare, label: "Support Radar", href: "/admin/support" },
   { icon: PenSquare, label: "Gig Radar", href: "/admin/calendar" },
   { icon: Package, label: "Inventory", href: "/admin/inventory" },
   { icon: ShoppingBag, label: "Orders & Sales", href: "/admin/orders" },
   { icon: Truck, label: "Logistics", href: "/admin/logistics" },
   { icon: ImageIcon, label: "Gallery", href: "/admin/gallery" },
   { icon: PenSquare, label: "Site Editor", href: "/admin/editor" },
-  { icon: Shield, label: "Secured Vault", href: "/admin/vault" },
   { icon: Settings, label: "Settings", href: "/admin/settings" },
   { icon: ExternalLink, label: "Help Center", href: "/admin/docs" },
 ];

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import twilio from "twilio";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const { type, data } = await req.json();

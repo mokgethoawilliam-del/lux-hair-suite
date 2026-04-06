@@ -125,7 +125,7 @@ export default function GigRadarPage() {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "bookings" },
-        (payload) => {
+        (payload: any) => {
           console.log("Incoming Gig Detected:", payload);
           setNewGigAlert(payload.new as Booking);
           load(); // Refresh the grid

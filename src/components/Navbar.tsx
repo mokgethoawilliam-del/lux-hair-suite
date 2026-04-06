@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ShoppingBag } from "lucide-react";
+import { Menu, X, ShoppingBag, Radar } from "lucide-react";
 import Link from "next/link";
 import { getSiteMetadata } from "@/lib/supabase";
 
@@ -61,9 +61,10 @@ export default function Navbar({ siteId, slug }: { siteId?: string, slug?: strin
           {slug && (
             <Link
               href={`/s/${slug}/track`}
-              className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:border-brand-gold hover:text-brand-gold text-white/80 rounded-full transition-all text-[10px] font-bold uppercase tracking-[0.2em]"
+              className="flex items-center gap-2.5 px-5 py-2.5 bg-white/5 border border-white/10 hover:border-brand-gold hover:text-brand-gold text-white/80 rounded-full transition-all text-[10px] font-bold uppercase tracking-[0.2em] group"
             >
-              Track
+              <Radar className="w-3.5 h-3.5 text-brand-gold animate-pulse group-hover:scale-110 transition-transform" />
+              Track Order
             </Link>
           )}
 
