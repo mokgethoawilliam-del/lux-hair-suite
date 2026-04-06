@@ -58,6 +58,7 @@ function CheckoutContent() {
   const componentProps = {
     email: customer.email,
     amount: (product?.price || 0) * 100, // Paystack works in kobo/cents
+    currency: "ZAR",
     metadata: {
       custom_fields: [
         { display_name: "Name", variable_name: "name", value: customer.name },

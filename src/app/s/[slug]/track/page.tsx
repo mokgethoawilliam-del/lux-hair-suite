@@ -278,6 +278,7 @@ function SettlementButton({ item, site, onSuccess }: { item: any, site: any, onS
     reference: `SETTLE_${item.id}_${new Date().getTime()}`,
     email: item.customer_email || "customer@kasibusinesshub.com",
     amount: depositAmount * 100, // ZAR to cents
+    currency: "ZAR",
     publicKey,
     metadata: {
       custom_fields: [{ display_name: "Booking ID", variable_name: "booking_id", value: item.id }]
