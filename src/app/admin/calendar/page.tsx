@@ -29,6 +29,7 @@ export default function GigRadarPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("Active");
+  const [reportPeriod, setReportPeriod] = useState("All Time");
   const [newGigAlert, setNewGigAlert] = useState<Booking | null>(null);
 
   const downloadReceipt = async (booking: Booking) => {
@@ -52,10 +53,25 @@ export default function GigRadarPage() {
 
   const downloadHistoryReport = async () => {
     try {
-      const historyGigs = bookings.filter(b => b.status === "Completed");
-      if (historyGigs.length === 0) return alert("No completed gigs found to export.");
+      const now = new Date();
+      const historyGigs = bookings.filter(b => {
+        if (b.status !== "Completed") return false;
+        if (reportPeriod === "All Time") return true;
+        
+        const gigDate = new Date(b.slot_start);
+        const diffTime = now.getTime() - gigDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (reportPeriod === "Today") return diffDays <= 1;
+        if (reportPeriod === "This Week") return diffDays <= 7;
+        if (reportPeriod === "This Month") return diffDays <= 30;
+        
+        return true;
+      });
+
+      if (historyGigs.length === 0) return alert(`No completed gigs found for ${reportPeriod}.`);
       const { generateHistoryReport } = await import("@/lib/pdf-service");
-      generateHistoryReport(historyGigs, "All Time", "Kagiso Hair Suite");
+      generateHistoryReport(historyGigs, reportPeriod, "Kagiso Hair Suite");
     } catch (err: any) {
       console.error("PDF generation failed:", err);
       alert(`Report Generation Failed: ${err.message || 'Unknown error'}`);
@@ -170,13 +186,25 @@ export default function GigRadarPage() {
 
         <div className="flex items-center gap-3">
           {filter === "History" && (
-            <button
-               onClick={downloadHistoryReport}
-               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] uppercase font-bold tracking-widest rounded-lg shadow-lg shadow-indigo-600/30 transition-all"
-            >
-               <Download className="w-3 h-3" />
-               Report
-            </button>
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-1 rounded-lg">
+               <select
+                 value={reportPeriod}
+                 onChange={(e) => setReportPeriod(e.target.value)}
+                 className="bg-transparent text-white text-[10px] uppercase font-bold tracking-widest outline-none px-2 py-1 appearance-none cursor-pointer"
+               >
+                 <option value="Today" className="bg-[#050505]">Today</option>
+                 <option value="This Week" className="bg-[#050505]">This Week</option>
+                 <option value="This Month" className="bg-[#050505]">This Month</option>
+                 <option value="All Time" className="bg-[#050505]">All Time</option>
+               </select>
+               <button
+                  onClick={downloadHistoryReport}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] uppercase font-bold tracking-widest rounded transition-all"
+               >
+                  <Download className="w-3 h-3" />
+                  Export
+               </button>
+            </div>
           )}
           <div className="flex p-1 bg-white/[0.03] border border-white/5 rounded-xl">
              {["Active", "Pending", "Confirmed", "History"].map((f) => (

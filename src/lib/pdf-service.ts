@@ -61,7 +61,9 @@ export const generateProfessionalReceipt = (data: ReceiptData) => {
   });
 
   // 4. Financial Summary
-  const finalY = doc.lastAutoTable.finalY + 10;
+  const rawY = (doc as any).lastAutoTable?.finalY;
+  const tableY = typeof rawY === 'number' && !isNaN(rawY) ? rawY : 110;
+  const finalY = tableY + 10;
   
   doc.setFont("helvetica", "bold");
   doc.text("TOTAL AMOUNT:", 130, finalY + 10);
