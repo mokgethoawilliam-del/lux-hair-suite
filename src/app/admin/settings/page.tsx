@@ -20,6 +20,10 @@ export default function AdminSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  
+  const [zones, setZones] = useState<any[]>([]);
+  const [newZone, setNewZone] = useState({ name: "", fee: 0 });
+  const [zoneLoading, setZoneLoading] = useState(false);
 
   useEffect(() => {
     getAppSettings()
@@ -33,8 +37,37 @@ export default function AdminSettings() {
         cal_link: s.cal_link || "",
       }))
       .catch(console.error)
-      .finally(() => setLoading(false));
+
+    import("@/lib/supabase").then(({ fetchDeliveryZones }) => {
+      fetchDeliveryZones().then((z) => setZones(z || [])).catch(console.error).finally(() => setLoading(false));
+    });
   }, []);
+
+  const handleAddZone = async () => {
+    if (!newZone.name) return;
+    setZoneLoading(true);
+    try {
+      const { createDeliveryZone } = await import("@/lib/supabase");
+      const added = await createDeliveryZone(newZone.name, Number(newZone.fee));
+      setZones(prev => [...prev, added]);
+      setNewZone({ name: "", fee: 0 });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add delivery zone. Please try again.");
+    } finally {
+      setZoneLoading(false);
+    }
+  };
+
+  const handleRemoveZone = async (id: string) => {
+    try {
+      const { deleteDeliveryZone } = await import("@/lib/supabase");
+      await deleteDeliveryZone(id);
+      setZones(prev => prev.filter(z => z.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -279,6 +312,65 @@ export default function AdminSettings() {
            <p className="text-[9px] text-white/20 italic ml-4">
              Paste your Cal.com event link here to replace the internal system with professional scheduling.
            </p>
+        </div>
+      </motion.div>
+
+      {/* Delivery Zones */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="p-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl space-y-6"
+      >
+        <div className="flex items-center justify-between pb-4 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-green-500/10 rounded-xl border border-green-500/20">
+              <Globe className="w-5 h-5 text-green-400" />
+            </div>
+            <div>
+              <h3 className="font-bold text-white">Logistics & Regional Delivery</h3>
+              <p className="text-xs text-white/30">Manage Storefront Shipping Fees</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {zones.map((zone) => (
+              <div key={zone.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-col justify-between group h-24">
+                 <div>
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">{zone.name}</p>
+                   <p className="text-lg font-serif text-brand-gold mt-1">R {zone.fee}</p>
+                 </div>
+                 <button onClick={() => handleRemoveZone(zone.id)} className="text-[9px] uppercase tracking-widest font-bold text-red-500/50 hover:text-red-500 text-left transition-colors">
+                   Remove Zone
+                 </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-4 border-t border-white/5 flex gap-4">
+            <input 
+              placeholder="e.g. Nationwide Checkout"
+              value={newZone.name}
+              onChange={(e) => setNewZone({...newZone, name: e.target.value})}
+              className="flex-1 px-4 py-3 bg-[#0f1117] border border-white/10 rounded-xl focus:border-green-500/50 outline-none transition-all text-white text-sm"
+            />
+            <input 
+              type="number"
+              placeholder="R 0.00"
+              value={newZone.fee}
+              onChange={(e) => setNewZone({...newZone, fee: Number(e.target.value)})}
+              className="w-32 px-4 py-3 bg-[#0f1117] border border-white/10 rounded-xl focus:border-green-500/50 outline-none transition-all text-white text-sm"
+            />
+            <button 
+              onClick={handleAddZone}
+              disabled={zoneLoading || !newZone.name}
+              className="px-6 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white font-bold rounded-xl text-xs uppercase tracking-widest transition-all"
+            >
+              {zoneLoading ? '...' : '+ Add'}
+            </button>
+          </div>
         </div>
       </motion.div>
 

@@ -141,6 +141,14 @@ export async function createOrder(orderData: {
   amount: number;
   payment_reference: string;
   payment_method: string;
+  shipping?: {
+    street: string;
+    city: string;
+    province: string;
+    postal_code: string;
+    delivery_zone_id: string | null;
+    delivery_fee: number;
+  };
 }) {
   const activeSiteId = await getAdminSite();
   if (!activeSiteId) throw new Error("Could not resolve Site Identity for Order.");
@@ -164,7 +172,14 @@ export async function createOrder(orderData: {
       amount: orderData.amount,
       payment_reference: orderData.payment_reference,
       payment_method: orderData.payment_method,
-      status: 'Paid'
+      status: 'Paid',
+      shipping_street: orderData.shipping?.street || null,
+      shipping_city: orderData.shipping?.city || null,
+      shipping_province: orderData.shipping?.province || null,
+      shipping_postal_code: orderData.shipping?.postal_code || null,
+      delivery_zone_id: orderData.shipping?.delivery_zone_id || null,
+      delivery_fee: orderData.shipping?.delivery_fee || 0,
+      delivery_status: 'Pending'
     }])
     .select()
     .single();
@@ -291,6 +306,43 @@ export async function updateAppSettings(settings: Record<string, string>, siteId
   return data;
 }
 
+// 2.3 Logistics
+export async function fetchDeliveryZones(siteId?: string) {
+  const activeSiteId = siteId || await getAdminSite();
+  if (!activeSiteId) return [];
+
+  const { data, error } = await supabase
+    .from("delivery_zones")
+    .select("*")
+    .eq("site_id", activeSiteId)
+    .order("fee", { ascending: true });
+
+  if (error) return [];
+  return data;
+}
+
+export async function createDeliveryZone(name: string, fee: number) {
+  const activeSiteId = await getAdminSite();
+  if (!activeSiteId) throw new Error("Unauthorized.");
+
+  const { data, error } = await supabase
+    .from("delivery_zones")
+    .insert([{ site_id: activeSiteId, name, fee }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteDeliveryZone(id: string) {
+  const { error } = await supabase
+    .from("delivery_zones")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function fetchOrders(siteId?: string) {
   const activeSiteId = siteId || await getAdminSite();
   if (!activeSiteId) return []; // Identity Guard
@@ -304,6 +356,18 @@ export async function fetchOrders(siteId?: string) {
     .eq("site_id", activeSiteId); // Absolute isolation
   
   const { data, error } = await query.order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateDeliveryStatus(id: string, delivery_status: string) {
+  const { data, error } = await supabase
+    .from("orders")
+    .update({ delivery_status })
+    .eq("id", id)
+    .select()
+    .single();
 
   if (error) throw error;
   return data;

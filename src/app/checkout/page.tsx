@@ -32,6 +32,10 @@ function CheckoutContent() {
   const [customer, setCustomer] = useState({ name: "", email: "", whatsapp: "" });
   const [paystackKey, setPaystackKey] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  
+  const [deliveryZones, setDeliveryZones] = useState<any[]>([]);
+  const [selectedZone, setSelectedZone] = useState<any | null>(null);
+  const [shipping, setShipping] = useState({ street: "", city: "", province: "", postal_code: "" });
 
   useEffect(() => {
     async function init() {
@@ -48,6 +52,12 @@ function CheckoutContent() {
       const settings = await getAppSettings();
       setPaystackKey(settings.paystack_public_key || "");
       
+      // 3. Fetch Logistics Mapping
+      const { fetchDeliveryZones } = await import("@/lib/supabase");
+      const zones = await fetchDeliveryZones();
+      setDeliveryZones(zones);
+      if (zones.length > 0) setSelectedZone(zones.find((z: any) => parseFloat(z.fee) === 0) || zones[0]);
+      
       setIsLoading(false);
     }
     init();
@@ -55,9 +65,12 @@ function CheckoutContent() {
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-brand-obsidian"><Loader2 className="animate-spin text-brand-gold" /></div>;
 
+  const deliveryFee = selectedZone ? parseFloat(selectedZone.fee) : 0;
+  const totalAmount = (product?.price || 0) + deliveryFee;
+
   const componentProps = {
     email: customer.email,
-    amount: (product?.price || 0) * 100, // Paystack works in kobo/cents
+    amount: totalAmount * 100, // Paystack works in kobo/cents
     currency: "ZAR",
     metadata: {
       custom_fields: [
@@ -72,9 +85,17 @@ function CheckoutContent() {
         await createOrder({
           customer: { full_name: customer.name, email: customer.email, whatsapp_number: customer.whatsapp },
           product_id: productId!,
-          amount: product?.price || 0,
+          amount: totalAmount,
           payment_reference: reference.reference,
           payment_method: 'Paystack',
+          shipping: selectedZone ? {
+            street: shipping.street,
+            city: shipping.city,
+            province: shipping.province,
+            postal_code: shipping.postal_code,
+            delivery_zone_id: selectedZone.id,
+            delivery_fee: parseFloat(selectedZone.fee)
+          } : undefined
         });
         alert("Payment Successful! Your order has been securely logged.");
         // Redirect directly to the tracking portal so the customer instantly learns where to track their package
@@ -132,6 +153,51 @@ function CheckoutContent() {
             </div>
           </div>
 
+          <div className="space-y-6 pt-4 border-t border-white/10">
+            <h3 className="text-xl font-serif text-white/80">Delivery <span className="text-brand-gold italic">Strategy</span></h3>
+            
+            <div className="space-y-2">
+               <label className="text-[10px] uppercase font-bold text-white/30 tracking-widest ml-1">Select Region</label>
+               <select 
+                 value={selectedZone?.id || ""} 
+                 onChange={(e) => setSelectedZone(deliveryZones.find(z => z.id === e.target.value) || null)}
+                 className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-brand-gold/50 outline-none transition-all appearance-none"
+               >
+                 {deliveryZones.map(zone => (
+                   <option key={zone.id} value={zone.id} className="bg-[#050505] text-white">
+                     {zone.name} (+R {zone.fee})
+                   </option>
+                 ))}
+               </select>
+            </div>
+
+            {selectedZone && parseFloat(selectedZone.fee) > 0 && (
+              <div className="grid grid-cols-2 gap-4">
+                 <input 
+                   type="text" 
+                   value={shipping.street}
+                   onChange={e => setShipping({...shipping, street: e.target.value})}
+                   placeholder="Street Address (Optional)" 
+                   className="col-span-2 px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-brand-gold/50 outline-none text-sm transistion-all"
+                 />
+                 <input 
+                   type="text" 
+                   value={shipping.city}
+                   onChange={e => setShipping({...shipping, city: e.target.value})}
+                   placeholder="City / Suburb" 
+                   className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-brand-gold/50 outline-none text-sm transistion-all"
+                 />
+                 <input 
+                   type="text" 
+                   value={shipping.postal_code}
+                   onChange={e => setShipping({...shipping, postal_code: e.target.value})}
+                   placeholder="Postal Code" 
+                   className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-brand-gold/50 outline-none text-sm transistion-all"
+                 />
+              </div>
+            )}
+          </div>
+
           <div className="p-6 bg-brand-emerald/10 border border-brand-emerald/20 rounded-3xl space-y-4">
              <div className="flex items-center gap-4 text-brand-gold">
                 <ShieldCheck className="w-6 h-6" />
@@ -160,9 +226,23 @@ function CheckoutContent() {
 
           <div className="h-px bg-white/5" />
 
+          <div className="flex justify-between items-center text-sm font-medium text-white/60">
+             <span>Subtotal</span>
+             <span>R {product?.price}</span>
+          </div>
+
+          {selectedZone && parseFloat(selectedZone.fee) > 0 && (
+            <div className="flex justify-between items-center text-sm font-medium text-amber-500/80">
+               <span>Delivery ({selectedZone.name})</span>
+               <span>+ R {selectedZone.fee}</span>
+            </div>
+          )}
+
+          <div className="h-px bg-white/5" />
+
           <div className="flex justify-between items-center text-2xl font-serif">
              <span>Total</span>
-             <span className="text-brand-gold text-3xl">R {product?.price}</span>
+             <span className="text-brand-gold text-3xl">R {totalAmount}</span>
           </div>
 
           {!paystackKey ? (

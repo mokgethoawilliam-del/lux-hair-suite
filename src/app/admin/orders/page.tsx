@@ -63,6 +63,19 @@ export default function AdminOrders() {
     });
   };
 
+  const handleDeliveryUpdate = async (id: string, delivery_status: string) => {
+    // Optimistic Update
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, delivery_status } : o));
+    try {
+      const { updateDeliveryStatus } = await import("@/lib/supabase");
+      await updateDeliveryStatus(id, delivery_status);
+    } catch (err) {
+      console.error("Update failed:", err);
+      alert("Failed to update delivery status.");
+      loadData(); // Revert
+    }
+  };
+
   if (isLoading) return <div className="p-20 text-center"><Loader2 className="animate-spin text-amber-500 mx-auto" /></div>;
 
   return (
@@ -138,9 +151,24 @@ export default function AdminOrders() {
                   </div>
                 </div>
                 <div className="pl-[52px]">
-                  <p className="text-[9px] uppercase tracking-widest font-bold text-amber-500/60">
-                    Delivery: <span className="text-white/40">{order.delivery_status || 'Pending'}</span>
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[9px] uppercase tracking-widest font-bold text-amber-500/60">Delivery:</p>
+                    <select
+                      value={order.delivery_status || 'Pending'}
+                      onChange={(e) => handleDeliveryUpdate(order.id, e.target.value)}
+                      className={`text-xs font-bold uppercase tracking-widest outline-none bg-transparent cursor-pointer ${
+                        order.delivery_status === 'Delivered' ? 'text-green-400' :
+                        order.delivery_status === 'Shipped' ? 'text-blue-400' :
+                        order.delivery_status === 'Processing' ? 'text-amber-400' :
+                        'text-white/40'
+                      }`}
+                    >
+                      <option value="Pending" className="bg-[#050505] text-white">Pending</option>
+                      <option value="Processing" className="bg-[#050505] text-white">Processing</option>
+                      <option value="Shipped" className="bg-[#050505] text-white">Shipped</option>
+                      <option value="Delivered" className="bg-[#050505] text-white">Delivered</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
