@@ -73,7 +73,11 @@ export const generateProfessionalReceipt = (data: ReceiptData) => {
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text("PAYMENT STATUS:", 130, finalY + 20);
-  doc.setTextColor(data.payment_status === 'Paid' ? [16, 185, 129] : [245, 158, 11]); // Emerald or Amber
+  if (data.payment_status === 'Paid') {
+    doc.setTextColor(16, 185, 129); // Emerald
+  } else {
+    doc.setTextColor(245, 158, 11); // Amber
+  }
   doc.text(data.payment_status.toUpperCase(), 170, finalY + 20, { align: 'right' });
 
   // 5. Footer / Legal
