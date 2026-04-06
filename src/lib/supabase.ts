@@ -188,6 +188,19 @@ export async function createOrder(orderData: {
     .single();
 
   if (orderError) throw orderError;
+
+  // 3. Atomically Decrement Inventory
+  try {
+    await supabase.rpc('decrement_stock', { 
+      p_id: orderData.product_id, 
+      p_quantity: 1 
+    });
+  } catch (err) {
+    console.error("Non-blocking: Failed to decrement stock.", err);
+    // We don't throw here to avoid failing the order if only inventory sync fails,
+    // though in a production env you might want stricter consistency.
+  }
+
   return order;
 }
 

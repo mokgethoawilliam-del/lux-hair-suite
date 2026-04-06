@@ -6,10 +6,62 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search, Package, Calendar, Clock, CheckCircle2, 
   AlertCircle, ChevronRight, Loader2, Download,
-  MessageSquare, Phone, Mail, ArrowLeft
+  MessageSquare, Phone, Mail, ArrowLeft, Truck
 } from "lucide-react";
 import { supabase, getSiteBySlug } from "@/lib/supabase";
 import { usePaystackPayment } from "react-paystack";
+
+function FulfillmentJourney({ status }: { status: string }) {
+  const stages = [
+    { id: 'Pending', label: 'Received', icon: Package },
+    { id: 'Processing', label: 'Packed', icon: Clock },
+    { id: 'Shipped', label: 'On Route', icon: Truck },
+    { id: 'Delivered', label: 'Handover', icon: CheckCircle2 },
+  ];
+
+  const currentIdx = stages.findIndex(s => s.id === status);
+  const currentIndex = currentIdx === -1 ? 0 : currentIdx;
+  
+  return (
+    <div className="mt-10 pt-8 border-t border-white/5 px-2">
+      <div className="flex justify-between items-center relative">
+        {/* Progress Line */}
+        <div className="absolute top-5 left-0 w-full h-[1px] bg-white/5 -z-0" />
+        <motion.div 
+          className="absolute top-5 left-0 h-[1px] bg-indigo-500 -z-0" 
+          initial={{ width: 0 }}
+          animate={{ width: `${(currentIndex / (stages.length - 1)) * 100}%` }}
+          transition={{ duration: 1.5, ease: "circOut" }}
+        />
+        
+        {stages.map((stage, idx) => {
+          const Icon = stage.icon;
+          const isCompleted = idx <= currentIndex;
+          const isActive = idx === currentIndex;
+          
+          return (
+            <div key={stage.id} className="flex flex-col items-center gap-3 relative z-10">
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: idx * 0.1 }}
+                className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-700 ${
+                  isCompleted ? 'bg-indigo-600 border-indigo-400 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)]' : 
+                  'bg-[#0a0a0a] border-white/10 text-white/10'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'animate-pulse' : ''}`} />
+              </motion.div>
+              <span className={`text-[8px] uppercase tracking-widest font-bold transition-colors duration-700 ${
+                isCompleted ? 'text-white' : 'text-white/20'
+              }`}>{stage.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function TrackOrderPage() {
   const params = useParams();
@@ -249,6 +301,11 @@ export default function TrackOrderPage() {
                              </div>
                           </div>
   
+                          {/* Fulfillment Journey Timeline */}
+                          {!isBooking && (
+                            <FulfillmentJourney status={item.delivery_status || 'Pending'} />
+                          )}
+
                           {/* Background Decor */}
                           <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-indigo-500/10 transition-all pointer-events-none" />
                        </motion.div>
