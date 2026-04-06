@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, BookOpen, Globe, PenSquare, Shield, HelpCircle, ArrowRight, ExternalLink } from "lucide-react";
+import { Search, BookOpen, Globe, PenSquare, Shield, HelpCircle, ArrowRight, ExternalLink, Truck, Zap } from "lucide-react";
 
 const DOCS = [
   {
@@ -15,17 +15,26 @@ const DOCS = [
     ]
   },
   {
+    category: "Logistics & Fulfillment",
+    icon: Truck,
+    articles: [
+      { id: "delivery-zones", title: "Nationwide Delivery Zones", content: "Configure custom regions like 'Gauteng Express' or 'Local Pickup' with flexible fees. These sync instantly with your checkout." },
+      { id: "fulfillment-journey", title: "The Package Journey Tracker", content: "Move orders from 'Received' to 'Delivered' in Sales Radar. Customers follow their parcel in real-time with a branding-rich timeline." },
+      { id: "address-validation", title: "Mandatory Shipping Details", content: "When a customer selects a delivery zone, our checkout strictly enforces physical address collection for accurate fulfillment." },
+    ]
+  },
+  {
     category: "E-Commerce & Inventory",
     icon: PenSquare,
     articles: [
-      { id: "inventory", title: "Managing Diverse Products", content: "How to add weaves, sneakers, or tech items to your inventory. Remember to use high-quality images for a premium look." },
-      { id: "variants", title: "Upgrading Variants (Sizes & Colors)", content: "Use the 'Edit' tool to add sizes and colors to existing stock. Our searchable Multi-Select Color Picker supports luxury presets for professional listing." },
+      { id: "inventory-sync", title: "Automated Inventory Sync", content: "Every successful Paystack payment now triggers an atomic stock reduction. If a customer buys 1 item, your stock level drops by 1 unit automatically." },
+      { id: "variants", title: "Upgrading Variants (Sizes & Colors)", content: "Use the 'Edit' tool to add sizes and colors to existing stock. Our searchable Multi-Select Color Picker supports luxury presets." },
       { id: "multi-hustle", title: "The Multi-Hustle Strategy", content: "Selling both Services (Hair) and Products (Sneakers)? Use the Multi-Hustle focus for a versatile shop layout." },
     ]
   },
   {
     category: "Advanced Features",
-    icon: Globe,
+    icon: Zap,
     articles: [
       { id: "domain", title: "Connecting a Professional Domain", content: "Step-by-step DNS guide for your custom domain. Point your A records and CNAME to Kasi BusinessHub high-speed servers." },
       { id: "bookings", title: "Mastering the Gig Radar", content: "Configure real-time booking alerts and manage your calendar for service-based commerce." },
@@ -98,12 +107,12 @@ export default function HelpCenter() {
 
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-10 border-t border-white/5">
-        <a href="/admin/settings" className="p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl flex items-center justify-between group">
+        <a href="/admin/logistics" className="p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl flex items-center justify-between group">
            <div className="flex items-center gap-4">
-              <Globe className="w-6 h-6 text-indigo-400" />
+              <Truck className="w-6 h-6 text-indigo-400" />
               <div>
-                <p className="text-sm font-bold text-white">Go to Domain Hub</p>
-                <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">Link your custom domain</p>
+                <p className="text-sm font-bold text-white">Logistics Manager</p>
+                <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">Configure regional delivery fees</p>
               </div>
            </div>
            <ExternalLink className="w-4 h-4 text-white/20 group-hover:text-white transition-colors" />
