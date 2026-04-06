@@ -9,6 +9,7 @@ import {
   MessageSquare, Phone, Mail, ArrowLeft
 } from "lucide-react";
 import { supabase, getSiteBySlug } from "@/lib/supabase";
+import { usePaystackPayment } from "react-paystack";
 
 export default function TrackOrderPage() {
   const params = useParams();
@@ -29,17 +30,22 @@ export default function TrackOrderPage() {
   }, [slug]);
 
   const downloadReceipt = async (item: any, isBooking: boolean) => {
-    const { generateProfessionalReceipt } = await import("@/lib/pdf-service");
-    const title = item.products?.name || (isBooking ? "Bespoke Service" : "Store Purchase");
-    generateProfessionalReceipt({
-      id: item.id,
-      date: new Date(item.created_at).toLocaleDateString(),
-      customer_name: isBooking ? item.customer_name : "Valued Client",
-      service_name: title,
-      price: item.products?.price || item.amount || 0,
-      payment_status: item.status === 'Confirmed' || item.status === 'Paid' ? 'Paid' : 'Pending',
-      brand_name: site?.name || "Kagiso Hair Suite"
-    });
+    try {
+      const { generateProfessionalReceipt } = await import("@/lib/pdf-service");
+      const title = item.products?.name || (isBooking ? "Bespoke Service" : "Store Purchase");
+      generateProfessionalReceipt({
+        id: item.id,
+        date: new Date(item.created_at).toLocaleDateString(),
+        customer_name: isBooking ? item.customer_name : "Valued Client",
+        service_name: title,
+        price: item.products?.price || item.amount || 0,
+        payment_status: item.status === 'Confirmed' || item.status === 'Paid' ? 'Paid' : 'Pending',
+        brand_name: site?.name || "Kagiso Hair Suite"
+      });
+    } catch (err: any) {
+      console.error("PDF generation failed:", err);
+      alert(`Receipt generation failed: ${err.message || 'Unknown error'}`);
+    }
   };
 
   const handleSearch = async () => {
@@ -218,7 +224,14 @@ export default function TrackOrderPage() {
                                 </div>
                              </div>
   
-                             <div className="flex gap-3 w-full md:w-auto">
+                             <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                                {isBooking && item.status === 'Confirmed' && (
+                                  <SettlementButton 
+                                    item={item} 
+                                    site={site} 
+                                    onSuccess={() => handleSearch()} 
+                                  />
+                                )}
                                 <button 
                                   onClick={() => downloadReceipt(item, isBooking)}
                                   className="flex-1 md:flex-none px-6 py-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest"
@@ -253,5 +266,53 @@ export default function TrackOrderPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Settlement Button Sub-Component
+function SettlementButton({ item, site, onSuccess }: { item: any, site: any, onSuccess: () => void }) {
+  const depositAmount = (item.products?.price || 0) / 2; // the remaining 50%
+  const publicKey = site?.paystack_public_key || "pk_test_6b0b21b28e06820819e964c7377906b98239cab9"; // fallback to known test key
+
+  const config = {
+    reference: `SETTLE_${item.id}_${new Date().getTime()}`,
+    email: item.customer_email || "customer@kasibusinesshub.com",
+    amount: depositAmount * 100, // ZAR to cents
+    publicKey,
+    metadata: {
+      custom_fields: [{ display_name: "Booking ID", variable_name: "booking_id", value: item.id }]
+    }
+  };
+
+  const initializePayment = usePaystackPayment(config);
+
+  const triggerPayment = () => {
+    initializePayment({
+      onSuccess: async (reference: any) => {
+        try {
+          // Optimistically update DB status
+          await supabase.from('bookings').update({ status: 'Completed', notes: `${item.notes || ''} [Balance Settled via PTK: ${reference.reference}]` }).eq('id', item.id);
+          alert("Balance settled successfully! Your gig is now fully paid.");
+          onSuccess();
+        } catch (err) {
+          console.error(err);
+        }
+      },
+      onClose: () => {
+        console.log("Payment window closed.");
+      }
+    });
+  };
+
+  if (depositAmount <= 0) return null;
+
+  return (
+    <button 
+      onClick={triggerPayment}
+      className="flex-1 md:flex-none px-6 py-4 bg-green-500 hover:bg-green-400 text-white border border-green-400/20 rounded-xl transition-all shadow-lg shadow-green-500/20 flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest"
+    >
+      <CheckCircle2 className="w-4 h-4" />
+      Settle R {depositAmount.toFixed(2)}
+    </button>
   );
 }

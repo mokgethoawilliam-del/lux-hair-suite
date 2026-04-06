@@ -32,24 +32,34 @@ export default function GigRadarPage() {
   const [newGigAlert, setNewGigAlert] = useState<Booking | null>(null);
 
   const downloadReceipt = async (booking: Booking) => {
-    const { generateProfessionalReceipt } = await import("@/lib/pdf-service");
-    generateProfessionalReceipt({
-      id: booking.id,
-      date: new Date(booking.slot_start).toLocaleDateString(),
-      customer_name: booking.customer_name,
-      customer_phone: booking.customer_phone,
-      service_name: booking.products?.name || "Bespoke Service",
-      price: booking.products?.price || 0,
-      payment_status: booking.status === 'Confirmed' ? 'Paid' : 'Pending',
-      brand_name: "Kagiso Hair Suite" // or your DB metadata
-    });
+    try {
+      const { generateProfessionalReceipt } = await import("@/lib/pdf-service");
+      generateProfessionalReceipt({
+        id: booking.id,
+        date: new Date(booking.slot_start).toLocaleDateString(),
+        customer_name: booking.customer_name,
+        customer_phone: booking.customer_phone,
+        service_name: booking.products?.name || "Bespoke Service",
+        price: booking.products?.price || 0,
+        payment_status: booking.status === 'Confirmed' ? 'Paid' : 'Pending',
+        brand_name: "Kagiso Hair Suite" // or your DB metadata
+      });
+    } catch (err: any) {
+      console.error("PDF generation failed:", err);
+      alert(`Download Failed: ${err.message || 'Unknown error'}`);
+    }
   };
 
   const downloadHistoryReport = async () => {
-    const historyGigs = bookings.filter(b => b.status === "Completed");
-    if (historyGigs.length === 0) return alert("No completed gigs found to export.");
-    const { generateHistoryReport } = await import("@/lib/pdf-service");
-    generateHistoryReport(historyGigs, "All Time", "Kagiso Hair Suite");
+    try {
+      const historyGigs = bookings.filter(b => b.status === "Completed");
+      if (historyGigs.length === 0) return alert("No completed gigs found to export.");
+      const { generateHistoryReport } = await import("@/lib/pdf-service");
+      generateHistoryReport(historyGigs, "All Time", "Kagiso Hair Suite");
+    } catch (err: any) {
+      console.error("PDF generation failed:", err);
+      alert(`Report Generation Failed: ${err.message || 'Unknown error'}`);
+    }
   };
 
   const handleComplete = async (id: string) => {
