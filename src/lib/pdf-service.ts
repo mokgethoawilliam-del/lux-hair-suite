@@ -1,3 +1,6 @@
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 interface ReceiptData {
   id: string;
   date: string;
@@ -9,11 +12,7 @@ interface ReceiptData {
   brand_name?: string;
 }
 
-export const generateProfessionalReceipt = async (data: ReceiptData) => {
-  // Dynamic imports to prevent Next.js SSR "window is not defined" crashes
-  const { jsPDF } = await import("jspdf");
-  await import("jspdf-autotable");
-  
+export const generateProfessionalReceipt = (data: ReceiptData) => {
   const doc = new jsPDF() as any;
   const brand = data.brand_name || "Kagiso Hair Suite";
 
@@ -46,7 +45,7 @@ export const generateProfessionalReceipt = async (data: ReceiptData) => {
     [data.service_name, "1", `R ${data.price.toFixed(2)}`, `R ${data.price.toFixed(2)}`]
   ];
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 80,
     head: [['SERVICE / PRODUCT', 'QTY', 'UNIT PRICE', 'SUBTOTAL']],
     body: tableData,
@@ -62,7 +61,7 @@ export const generateProfessionalReceipt = async (data: ReceiptData) => {
   });
 
   // 4. Financial Summary
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
+  const finalY = doc.lastAutoTable.finalY + 10;
   
   doc.setFont("helvetica", "bold");
   doc.text("TOTAL AMOUNT:", 130, finalY + 10);
@@ -83,4 +82,58 @@ export const generateProfessionalReceipt = async (data: ReceiptData) => {
 
   // 6. Output
   doc.save(`Receipt_Kagiso_${data.id.slice(0, 8)}.pdf`);
+};
+
+export const generateHistoryReport = (gigs: any[], period: string, brand: string) => {
+  const doc = new jsPDF() as any;
+
+  // 1. Header
+  doc.setFillColor(15, 17, 23);
+  doc.rect(0, 0, 210, 40, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(22);
+  doc.text((brand || "Kagiso Hair Suite").toUpperCase(), 20, 25);
+  
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text("COMPLETED GIGS HISTORY REPORT", 20, 32);
+  doc.text(`PERIOD: ${period.toUpperCase()}`, 150, 25);
+  doc.text(`GENERATED: ${new Date().toLocaleDateString()}`, 150, 32);
+
+  // 2. Data Table
+  const tableData = gigs.map(gig => [
+    new Date(gig.slot_start).toLocaleDateString(),
+    gig.customer_name,
+    gig.products?.name || "Bespoke",
+    `R ${gig.products?.price?.toFixed(2) || '0.00'}`
+  ]);
+
+  const totalRevenue = gigs.reduce((sum, current) => sum + (current.products?.price || 0), 0);
+  tableData.push(["", "", "TOTAL REVENUE:", `R ${totalRevenue.toFixed(2)}`]);
+
+  autoTable(doc, {
+    startY: 50,
+    head: [['DATE', 'CLIENT', 'SERVICE', 'PRICE']],
+    body: tableData,
+    theme: 'grid',
+    headStyles: { fillColor: [79, 70, 229], textColor: 255, fontStyle: 'bold' },
+    styles: { fontSize: 9, cellPadding: 5 },
+    columnStyles: {
+      0: { cellWidth: 40 },
+      1: { cellWidth: 60 },
+      2: { cellWidth: 60 },
+      3: { halign: 'right' },
+    },
+    didParseCell: function(data: any) {
+        if (data.row.index === tableData.length - 1) {
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.textColor = [16, 185, 129];
+        }
+    }
+  });
+
+  // 3. Output
+  doc.save(`History_Report_${period}_KHD.pdf`);
 };

@@ -9,7 +9,6 @@ import {
   MessageSquare, Phone, Mail, ArrowLeft
 } from "lucide-react";
 import { supabase, getSiteBySlug } from "@/lib/supabase";
-import { generateProfessionalReceipt } from "@/lib/pdf-service";
 
 export default function TrackOrderPage() {
   const params = useParams();
@@ -28,6 +27,20 @@ export default function TrackOrderPage() {
     }
     loadSite();
   }, [slug]);
+
+  const downloadReceipt = async (item: any, isBooking: boolean) => {
+    const { generateProfessionalReceipt } = await import("@/lib/pdf-service");
+    const title = item.products?.name || (isBooking ? "Bespoke Service" : "Store Purchase");
+    generateProfessionalReceipt({
+      id: item.id,
+      date: new Date(item.created_at).toLocaleDateString(),
+      customer_name: isBooking ? item.customer_name : "Valued Client",
+      service_name: title,
+      price: item.products?.price || item.amount || 0,
+      payment_status: item.status === 'Confirmed' || item.status === 'Paid' ? 'Paid' : 'Pending',
+      brand_name: site?.name || "Kagiso Hair Suite"
+    });
+  };
 
   const handleSearch = async () => {
     if (!query || !site) return;
@@ -207,15 +220,7 @@ export default function TrackOrderPage() {
   
                              <div className="flex gap-3 w-full md:w-auto">
                                 <button 
-                                  onClick={() => generateProfessionalReceipt({
-                                    id: item.id,
-                                    date: new Date(item.created_at).toLocaleDateString(),
-                                    customer_name: isBooking ? item.customer_name : "Valued Client",
-                                    service_name: title,
-                                    price: item.products?.price || item.amount || 0,
-                                    payment_status: item.status === 'Confirmed' || item.status === 'Paid' ? 'Paid' : 'Pending',
-                                    brand_name: site?.name || "Kagiso Hair Suite"
-                                  })}
+                                  onClick={() => downloadReceipt(item, isBooking)}
                                   className="flex-1 md:flex-none px-6 py-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest"
                                 >
                                   <Download className="w-4 h-4" />

@@ -72,7 +72,7 @@ export default function DynamicLandingPage({ params }: { params: Promise<{ slug:
 
   return (
     <main className="min-h-screen bg-brand-obsidian text-white selection:bg-brand-gold selection:text-brand-obsidian">
-      <Navbar siteId={site.id} />
+      <Navbar siteId={site.id} slug={slug} />
       
       <div className="relative z-10 font-sans">
         <Hero siteId={site.id} />

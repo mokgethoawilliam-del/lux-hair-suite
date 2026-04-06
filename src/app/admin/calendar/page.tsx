@@ -8,7 +8,6 @@ import {
   CheckCircle2, Loader2, Filter, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { fetchBookings, updateBookingStatus, supabase } from "@/lib/supabase";
-import { generateProfessionalReceipt } from "@/lib/pdf-service";
 import { Download } from "lucide-react";
 
 interface Booking {
@@ -29,8 +28,29 @@ interface Booking {
 export default function GigRadarPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("All");
+  const [filter, setFilter] = useState("Active");
   const [newGigAlert, setNewGigAlert] = useState<Booking | null>(null);
+
+  const downloadReceipt = async (booking: Booking) => {
+    const { generateProfessionalReceipt } = await import("@/lib/pdf-service");
+    generateProfessionalReceipt({
+      id: booking.id,
+      date: new Date(booking.slot_start).toLocaleDateString(),
+      customer_name: booking.customer_name,
+      customer_phone: booking.customer_phone,
+      service_name: booking.products?.name || "Bespoke Service",
+      price: booking.products?.price || 0,
+      payment_status: booking.status === 'Confirmed' ? 'Paid' : 'Pending',
+      brand_name: "Kagiso Hair Suite" // or your DB metadata
+    });
+  };
+
+  const downloadHistoryReport = async () => {
+    const historyGigs = bookings.filter(b => b.status === "Completed");
+    if (historyGigs.length === 0) return alert("No completed gigs found to export.");
+    const { generateHistoryReport } = await import("@/lib/pdf-service");
+    generateHistoryReport(historyGigs, "All Time", "Kagiso Hair Suite");
+  };
 
   const handleComplete = async (id: string) => {
     // Optimistic UI Update
@@ -79,7 +99,11 @@ export default function GigRadarPage() {
     };
   }, []);
 
-  const filteredBookings = bookings.filter(b => filter === "All" || b.status === filter);
+  const filteredBookings = bookings.filter(b => {
+    if (filter === "Active") return b.status !== "Completed";
+    if (filter === "History") return b.status === "Completed";
+    return b.status === filter;
+  });
 
   // Group by date
   const groupedGigs = filteredBookings.reduce((acc: Record<string, Booking[]>, gig) => {
@@ -135,8 +159,17 @@ export default function GigRadarPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {filter === "History" && (
+            <button
+               onClick={downloadHistoryReport}
+               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] uppercase font-bold tracking-widest rounded-lg shadow-lg shadow-indigo-600/30 transition-all"
+            >
+               <Download className="w-3 h-3" />
+               Report
+            </button>
+          )}
           <div className="flex p-1 bg-white/[0.03] border border-white/5 rounded-xl">
-             {["All", "Pending", "Confirmed"].map((f) => (
+             {["Active", "Pending", "Confirmed", "History"].map((f) => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
@@ -232,16 +265,7 @@ export default function GigRadarPage() {
                        </p>
                        <div className="flex gap-2">
                          <button 
-                           onClick={() => generateProfessionalReceipt({
-                             id: booking.id,
-                             date: new Date(booking.slot_start).toLocaleDateString(),
-                             customer_name: booking.customer_name,
-                             customer_phone: booking.customer_phone,
-                             service_name: booking.products?.name || "Bespoke Service",
-                             price: booking.products?.price || 0,
-                             payment_status: booking.status === 'Confirmed' ? 'Paid' : 'Pending',
-                             brand_name: "Kagiso Hair Suite"
-                           })}
+                           onClick={() => downloadReceipt(booking)}
                            className="p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all text-white/40 hover:text-white"
                          >
                             <Download className="w-4 h-4" />
