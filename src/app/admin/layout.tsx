@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard, Radio, Package, ShoppingBag,
   Image as ImageIcon, PenSquare, Settings, ExternalLink,
-  User, ChevronRight, Shield,
+  User, ChevronRight, Shield, Truck,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -33,6 +33,7 @@ const navItems = [
   { icon: PenSquare, label: "Gig Radar", href: "/admin/calendar" },
   { icon: Package, label: "Inventory", href: "/admin/inventory" },
   { icon: ShoppingBag, label: "Orders & Sales", href: "/admin/orders" },
+  { icon: Truck, label: "Logistics", href: "/admin/logistics" },
   { icon: ImageIcon, label: "Gallery", href: "/admin/gallery" },
   { icon: PenSquare, label: "Site Editor", href: "/admin/editor" },
   { icon: Shield, label: "Secured Vault", href: "/admin/vault" },
