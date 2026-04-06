@@ -66,7 +66,13 @@ function CheckoutContent() {
   if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-brand-obsidian"><Loader2 className="animate-spin text-brand-gold" /></div>;
 
   const deliveryFee = selectedZone ? parseFloat(selectedZone.fee) : 0;
+  const isDelivery = deliveryFee > 0;
   const totalAmount = (product?.price || 0) + deliveryFee;
+
+  const isValidToPay = customer.name.trim() !== "" && 
+                       customer.email.trim() !== "" && 
+                       customer.whatsapp.trim() !== "" && 
+                       (!isDelivery || (shipping.street.trim() !== "" && shipping.city.trim() !== "" && shipping.postal_code.trim() !== ""));
 
   const componentProps = {
     email: customer.email,
@@ -177,7 +183,7 @@ function CheckoutContent() {
                    type="text" 
                    value={shipping.street}
                    onChange={e => setShipping({...shipping, street: e.target.value})}
-                   placeholder="Street Address (Optional)" 
+                   placeholder="Street Address" 
                    className="col-span-2 px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-brand-gold/50 outline-none text-sm transistion-all"
                  />
                  <input 
@@ -245,7 +251,11 @@ function CheckoutContent() {
              <span className="text-brand-gold text-3xl">R {totalAmount}</span>
           </div>
 
-          {!paystackKey ? (
+          {!isValidToPay ? (
+            <button disabled className="w-full py-5 bg-brand-gold/30 cursor-not-allowed text-brand-obsidian font-extrabold rounded-2xl transition-all shadow-xl text-lg uppercase tracking-widest">
+              Provide Required Details
+            </button>
+          ) : !paystackKey ? (
             <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl text-orange-500 text-sm">
               Note: Paystack is currently in test mode or unconfigured.
             </div>
