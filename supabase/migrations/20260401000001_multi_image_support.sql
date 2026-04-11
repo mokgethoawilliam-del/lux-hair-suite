@@ -12,3 +12,4 @@ AND (image_urls IS NULL OR array_length(image_urls, 1) IS NULL);
 
 -- Optional: Comment for documentation
 COMMENT ON COLUMN products.image_urls IS 'Array of high-resolution product image URLs for carousel display';
+the 

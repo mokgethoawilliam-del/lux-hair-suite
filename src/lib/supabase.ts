@@ -236,14 +236,16 @@ export async function resolveSiteId() {
        if (mainSite) return mainSite.id;
     }
 
-    // 2. Resolve via Hostname/Subdomain
+    // 1. Resolve via Hostname/Subdomain
     if (host.includes(".vercel.app")) {
       slug = host.split(".")[0];
-      // Industrial Override: If the root vercel app is accessed, bind to lux-hair-suite identity
+      // Map 'lux-hair-suite' to the correct DB slug
       if (slug === 'lux-hair-suite') slug = 'lux-hair-suite';
+      if (slug === 'kingswear') slug = 'kingswear';
     } else if (host === "localhost" || host === "127.0.0.1") {
-      const { data: firstSite } = await supabase.from("sites").select("id").limit(1).single();
-      return firstSite?.id;
+      // Local development defaults to the hair suite for continuity
+      const { data: hairSite } = await supabase.from("sites").select("id").eq("subdomain_slug", "lux-hair-suite").single();
+      return hairSite?.id;
     } else {
       // Custom Domain Support
       const { data: site } = await supabase
