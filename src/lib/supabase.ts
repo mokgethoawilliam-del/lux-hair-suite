@@ -231,7 +231,7 @@ export async function resolveSiteId() {
        const { data: mainSite } = await supabase
         .from("sites")
         .select("id")
-        .eq("subdomain_slug", "lux-hair-suite")
+        .eq("subdomain_slug", "kagiso-hair-suite")
         .single();
        if (mainSite) return mainSite.id;
     }
