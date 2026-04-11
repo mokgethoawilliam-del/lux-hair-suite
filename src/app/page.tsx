@@ -21,7 +21,7 @@ interface GalleryImage {
 
 export default function Home() {
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
-  const [brandName, setBrandName] = useState("KAGISO HAIR");
+  const [brandName, setBrandName] = useState("");
   const [aboutUs, setAboutUs] = useState("");
   const [businessFocus, setBusinessFocus] = useState("Hair & Beauty");
   const [siteId, setSiteId] = useState<string>("");

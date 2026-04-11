@@ -64,7 +64,7 @@ export default function BookingCalendar({ siteId, serviceId, serviceName, servic
       .eq("site_id", siteId)
       .gte("slot_start", `${selectedDate}T00:00:00`)
       .lte("slot_start", `${selectedDate}T23:59:59`)
-      .then(({ data }) => {
+      .then(({ data }: { data: any }) => {
         setExistingBookings(data || []);
         setCheckingAvailability(false);
       });

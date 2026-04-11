@@ -9,7 +9,7 @@ import { getSiteMetadata } from "@/lib/supabase";
 export default function Navbar({ siteId, slug }: { siteId?: string, slug?: string }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [brandName, setBrandName] = useState("LUX HAIR");
+  const [brandName, setBrandName] = useState("");
   const [businessFocus, setBusinessFocus] = useState("Hair & Beauty");
 
   useEffect(() => {
