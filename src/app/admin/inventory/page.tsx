@@ -229,6 +229,7 @@ export default function InventoryManager() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [activeSiteId, setActiveSiteId] = useState<string | null>(null);
 
   // New Product State
   const [newProduct, setNewProduct] = useState({
@@ -258,16 +259,26 @@ export default function InventoryManager() {
   };
 
   useEffect(() => {
-    fetchInventory();
+    const init = async () => {
+       const { resolveSiteId } = await import("@/lib/supabase");
+       const id = await resolveSiteId();
+       setActiveSiteId(id);
+       fetchInventory(id);
+    };
+    init();
   }, []);
 
-  const fetchInventory = async () => {
+  const fetchInventory = async (siteId?: string) => {
     try {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .neq("category", "Gallery")
-        .order("created_at", { ascending: false });
+      let query = supabase.from("products").select("*").neq("category", "Gallery");
+      
+      if (siteId) {
+        query = query.eq("site_id", siteId);
+      } else if (activeSiteId) {
+        query = query.eq("site_id", activeSiteId);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
       
       if (error) throw error;
       setInventory((data as Product[]) || []);
@@ -359,7 +370,8 @@ export default function InventoryManager() {
         stock_count: Number(newProduct.stock_count),
         is_new: newProduct.is_new,
         caption: newProduct.caption,
-        duration_hours: ["Service", "Frontal", "Weave", "Ponytail"].includes(newProduct.category) ? Number(newProduct.duration_hours) : 0
+        duration_hours: ["Service", "Frontal", "Weave", "Ponytail"].includes(newProduct.category) ? Number(newProduct.duration_hours) : 0,
+        site_id: activeSiteId
       };
 
       const { data, error } = await supabase
