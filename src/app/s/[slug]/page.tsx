@@ -10,6 +10,9 @@ import TailoringSuite from "@/components/TailoringSuite";
 import EventsSuite from "@/components/EventsSuite";
 import AffiliateSection from "@/components/AffiliateSection";
 import LeadMagnet from "@/components/LeadMagnet";
+import SupportChat from "@/components/SupportChat";
+import { Radar, Package, Search } from "lucide-react";
+import Link from "next/link";
 
 interface GalleryImage {
   id: string;
@@ -119,9 +122,44 @@ export default function DynamicLandingPage({ params }: { params: Promise<{ slug:
             </div>
           </section>
 
-          <div id="pro-care">
-            <AffiliateSection siteId={site.id} />
-          </div>
+          <AffiliateSection siteId={site.id} />
+
+          {/* Fulfillment Radar Section */}
+          <section id="track" className="py-24 relative overflow-hidden">
+             <div className="container mx-auto px-6 relative z-10">
+                <div className="max-w-4xl mx-auto bg-white/[0.02] border border-white/[0.06] rounded-[40px] p-8 md:p-12 backdrop-blur-3xl overflow-hidden relative group">
+                   <div className="flex flex-col md:flex-row items-center gap-10">
+                      <div className="flex-1 space-y-6">
+                         <div className="flex items-center gap-3">
+                            <div className="p-3 bg-brand-gold/10 rounded-2xl border border-brand-gold/20">
+                               <Radar className="w-6 h-6 text-brand-gold animate-pulse" />
+                            </div>
+                            <h2 className="text-3xl font-serif font-bold italic">Fulfillment <span className="text-white/20 not-italic">Radar</span></h2>
+                         </div>
+                         <p className="text-white/40 text-sm leading-relaxed max-w-md">
+                            Lost your receipt? Track your live installations, product orders, and bespoke bookings instantly across our network.
+                         </p>
+                         <Link 
+                           href={`/s/${slug}/track`}
+                           className="inline-flex items-center gap-3 px-8 py-4 bg-brand-gold text-brand-obsidian font-bold rounded-2xl hover:scale-105 transition-all shadow-xl shadow-brand-gold/20 uppercase tracking-widest text-xs"
+                         >
+                            <Search className="w-4 h-4" />
+                            Sync Your Radar
+                         </Link>
+                      </div>
+                      <div className="w-full md:w-64 aspect-square bg-gradient-to-br from-brand-gold/10 to-transparent rounded-3xl border border-white/5 flex items-center justify-center relative">
+                         <Package className="w-20 h-20 text-brand-gold/20" />
+                         <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-40 h-40 border border-brand-gold/10 rounded-full animate-ping opacity-20" />
+                         </div>
+                      </div>
+                   </div>
+                   {/* Background Glow */}
+                   <div className="absolute top-0 right-0 w-64 h-64 bg-brand-gold/5 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-brand-gold/10 transition-all" />
+                </div>
+             </div>
+          </section>
+
           <LeadMagnet siteId={site.id} />
         </div>
       </div>
@@ -146,6 +184,8 @@ export default function DynamicLandingPage({ params }: { params: Promise<{ slug:
           </div>
         </div>
       </footer>
+
+      <SupportChat siteId={site.id} />
     </main>
   );
 }

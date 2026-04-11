@@ -21,6 +21,10 @@ export default function Navbar({ siteId, slug }: { siteId?: string, slug?: strin
     async function load() {
       const metadata = await getSiteMetadata(siteId);
       if (metadata?.brand_name) setBrandName(metadata.brand_name);
+      else if (slug) {
+         // Fallback to Slug-based brand name if metadata is missing
+         setBrandName(slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
+      }
       if (metadata?.business_focus) setBusinessFocus(metadata.business_focus);
     }
     load();
@@ -95,6 +99,16 @@ export default function Navbar({ siteId, slug }: { siteId?: string, slug?: strin
             className="md:hidden bg-brand-obsidian border-t border-white/10 overflow-hidden"
           >
             <div className="flex flex-col p-6 gap-6">
+              {slug && (
+                <Link
+                  href={`/s/${slug}/track`}
+                  className="flex items-center gap-3 text-lg font-serif tracking-widest text-brand-gold hover:text-white transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Radar className="w-5 h-5 animate-pulse" />
+                  Track Order
+                </Link>
+              )}
               {[
                 "Collections", 
                 businessFocus === "Hair & Beauty" ? "Installations" : 

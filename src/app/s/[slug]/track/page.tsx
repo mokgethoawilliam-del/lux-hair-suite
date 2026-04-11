@@ -135,9 +135,9 @@ export default function TrackOrderPage() {
 
       // 3. Unified Timeline
       const unified = [
-        ...(bookingsData || []).map(b => ({ ...b, type: 'Booking' })),
-        ...ordersData.map(o => ({ ...o, type: 'Order' }))
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        ...(bookingsData || []).map((b: any) => ({ ...b, type: 'Booking' })),
+        ...ordersData.map((o: any) => ({ ...o, type: 'Order' }))
+      ].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setResults(unified);
     } catch (err) {

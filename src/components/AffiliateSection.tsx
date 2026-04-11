@@ -38,6 +38,11 @@ export default function AffiliateSection({ siteId }: { siteId?: string }) {
         
         if (data) setProducts(data as ProCareProduct[]);
         if (metadata.brand_name) setBrandName(metadata.brand_name);
+        else {
+           // Industrial Fallback: Fetch site name directly if metadata missing
+           const { data: site } = await supabase.from('sites').select('name').eq('id', siteId).single();
+           if (site?.name) setBrandName(site.name);
+        }
       } catch (err) {
         console.error("Error loading Pro-Care:", err);
       } finally {
