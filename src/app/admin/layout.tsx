@@ -4,12 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard, Radio, Package, ShoppingBag,
   Image as ImageIcon, PenSquare, Settings, ExternalLink,
-  User, ChevronRight, Shield, Truck, MessageSquare
+  User, ChevronRight, Shield, Truck, MessageSquare, LogOut
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { getAppSettings } from "@/lib/supabase";
+import { getAppSettings, supabase } from "@/lib/supabase";
+import { logout } from "../login/actions";
 
 interface AdminProfile {
   admin_name: string;
@@ -19,7 +20,7 @@ interface AdminProfile {
 }
 
 const THEME_MAP: Record<string, { color: string; bg: string; border: string; icon: string; highlight: string }> = {
-  "Hair & Beauty": { color: "text-emerald-400", bg: "bg-emerald-500/15", border: "border-emerald-500/20", icon: "text-emerald-400", highlight: "emerald" },
+  "Premium Weaves & Hair": { color: "text-emerald-400", bg: "bg-emerald-500/15", border: "border-emerald-500/20", icon: "text-emerald-400", highlight: "emerald" },
   "Sneakers & Streetwear": { color: "text-amber-400", bg: "bg-amber-500/15", border: "border-amber-500/20", icon: "text-amber-400", highlight: "amber" },
   "Clothing & Apparel": { color: "text-blue-400", bg: "bg-blue-500/15", border: "border-blue-500/20", icon: "text-blue-400", highlight: "blue" },
   "Events & Apparel": { color: "text-purple-400", bg: "bg-purple-500/15", border: "border-purple-500/20", icon: "text-purple-400", highlight: "purple" },
@@ -66,28 +67,43 @@ function Clock() {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [profile, setProfile] = useState<AdminProfile>({
     admin_name: "Admin",
     store_name: "My Store",
     avatar_color: "#6366f1",
-    business_focus: "Hair & Beauty",
+    business_focus: "Premium Weaves & Hair",
   });
 
   const loadProfile = useCallback(async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+         router.push("/login");
+         return;
+      }
+
+      // Check if user has any sites
+      const { data: mySites } = await supabase.from('sites').select('id').eq('owner_id', user.id);
+      
+      if ((!mySites || mySites.length === 0) && pathname !== "/admin/onboarding") {
+         router.push("/admin/onboarding");
+         return;
+      }
+
       const s = await getAppSettings();
       setProfile({
         admin_name: s.admin_name || "Admin",
         store_name: s.store_name || "My Store",
         avatar_color: s.avatar_color || "#6366f1",
-        business_focus: s.business_focus || "Hair & Beauty",
+        business_focus: s.business_focus || "Premium Weaves & Hair",
       });
     } catch { /* silently fail */ }
-  }, []);
+  }, [router, pathname]);
 
-  useEffect(() => { loadProfile(); }, [loadProfile, pathname]);
+  useEffect(() => { loadProfile(); }, [loadProfile]);
 
-  const theme = THEME_MAP[profile.business_focus] || THEME_MAP["Hair & Beauty"];
+  const theme = THEME_MAP[profile.business_focus] || THEME_MAP["Premium Weaves & Hair"];
 
   const initials = profile.admin_name
     .split(" ")
@@ -147,6 +163,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <ExternalLink className="w-4 h-4" />
             View Live Site
           </Link>
+
+          <button
+            onClick={async () => {
+              await logout();
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-red-400/50 hover:text-red-400 transition-all rounded-xl hover:bg-red-500/10 text-sm font-medium group"
+          >
+            <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            Sign Out
+          </button>
 
           {/* Profile Card */}
           <Link href="/admin/profile">

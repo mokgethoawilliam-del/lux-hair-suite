@@ -231,21 +231,19 @@ export async function resolveSiteId() {
        const { data: mainSite } = await supabase
         .from("sites")
         .select("id")
-        .eq("subdomain_slug", "kagiso-hair-suite")
+        .eq("subdomain_slug", "lux-hair-suite")
         .single();
        if (mainSite) return mainSite.id;
     }
 
-    // 1. Resolve via Hostname/Subdomain
+    // 2. Resolve via Hostname/Subdomain
     if (host.includes(".vercel.app")) {
       slug = host.split(".")[0];
-      // Map 'lux-hair-suite' to the correct DB slug
+      // Special override for the system root if needed
       if (slug === 'lux-hair-suite') slug = 'lux-hair-suite';
-      if (slug === 'kingswear') slug = 'kingswear';
     } else if (host === "localhost" || host === "127.0.0.1") {
-      // Local development defaults to the hair suite for continuity
-      const { data: hairSite } = await supabase.from("sites").select("id").eq("subdomain_slug", "lux-hair-suite").single();
-      return hairSite?.id;
+      const { data: firstSite } = await supabase.from("sites").select("id").limit(1).single();
+      return firstSite?.id;
     } else {
       // Custom Domain Support
       const { data: site } = await supabase
@@ -342,15 +340,43 @@ export async function fetchDeliveryZones(siteId?: string) {
   return data;
 }
 
-export async function createDeliveryZone(name: string, fee: number) {
-  const activeSiteId = await getAdminSite();
-  if (!activeSiteId) throw new Error("Unauthorized.");
-
-  const { data, error } = await supabase
-    .from("delivery_zones")
-    .insert([{ site_id: activeSiteId, name, fee }])
+export async function provisionNewSite(data: { name: string; slug: string; ownerId: string }) {
+  // 1. Create Site
+  const { data: site, error: siteError } = await supabase
+    .from("sites")
+    .insert([{
+      name: data.name,
+      subdomain_slug: data.slug,
+      owner_id: data.ownerId
+    }])
     .select()
     .single();
+
+  if (siteError) throw siteError;
+
+  // 2. Initialize Metadata (Premium Weaves Focus)
+  const { error: metaError } = await supabase
+    .from("site_metadata")
+    .insert([{
+      site_id: site.id,
+      brand_name: data.name,
+      business_focus: "Premium Weaves & Hair",
+      hero_headline: `${data.name.split(' ')[0]}'s Premium Weaves.`,
+      hero_description: "Expertly crafted weaves and professional installations for the modern woman who demands the best.",
+      about_us: `Welcome to ${data.name}. We are dedicated to providing the highest quality weaves and hair experiences in the community.`
+    }]);
+
+  if (metaError) throw metaError;
+
+  // 3. Initialize default app settings
+  await supabase.from("app_settings").insert([
+    { site_id: site.id, key: "store_name", value: data.name },
+    { site_id: site.id, key: "business_focus", value: "Premium Weaves & Hair" },
+    { site_id: site.id, key: "store_currency", value: "ZAR" }
+  ]);
+
+  return site;
+}
 
   if (error) throw error;
   return data;

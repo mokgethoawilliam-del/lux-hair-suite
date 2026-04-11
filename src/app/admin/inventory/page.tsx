@@ -41,7 +41,7 @@ interface Product {
 }
 
 const LUXURY_COLORS = [
-  // Hair & Beauty
+  // Premium Weaves & Hair
   { name: "Jet Black", hex: "#000000" },
   { name: "Natural Black (1B)", hex: "#2b2b2b" },
   { name: "Chocolate Brown", hex: "#3d2b1f" },
@@ -509,7 +509,7 @@ export default function InventoryManager() {
                    onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
                    className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-amber-500/50 outline-none text-white"
                   >
-                     <optgroup label="Hair & Beauty">
+                     <optgroup label="Premium Weaves & Hair">
                        <option value="Frontal">Frontal</option>
                        <option value="Weave">Weave</option>
                        <option value="Ponytail">Ponytail</option>

@@ -11,7 +11,7 @@ export default function AdminSettings() {
   const [settings, setSettings] = useState({ 
     custom_domain: "", 
     store_currency: "ZAR",
-    business_focus: "Hair & Beauty",
+    business_focus: "Premium Weaves & Hair",
     admin_name: "",
     store_name: "",
     about_us: "",
@@ -26,7 +26,7 @@ export default function AdminSettings() {
       .then((s) => setSettings({ 
         custom_domain: s.custom_domain || "", 
         store_currency: s.store_currency || "ZAR",
-        business_focus: s.business_focus || "Hair & Beauty",
+        business_focus: s.business_focus || "Premium Weaves & Hair",
         admin_name: s.admin_name || "",
         store_name: s.store_name || "",
         about_us: s.about_us || "",
@@ -99,14 +99,9 @@ export default function AdminSettings() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {[
-            { name: "Hair & Beauty", icon: "✨", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
-            { name: "Sneakers & Streetwear", icon: "👟", bg: "bg-amber-500/10", border: "border-amber-500/20" },
-            { name: "Clothing & Apparel", icon: "👕", bg: "bg-blue-500/10", border: "border-blue-500/20" },
-            { name: "Events & Apparel", icon: "🎟️", bg: "bg-purple-500/10", border: "border-purple-500/20" },
-            { name: "Tailoring & Styling", icon: "✂️", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
-            { name: "Multi-Hustle", icon: "🏬", bg: "bg-pink-500/10", border: "border-pink-500/20" },
+            { name: "Premium Weaves & Hair", icon: "✨", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
           ].map((opt) => (
             <button
               key={opt.name}

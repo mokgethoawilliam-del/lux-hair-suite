@@ -28,16 +28,6 @@ interface Stats {
   products: number;
 }
 
-function LiveClock() {
-  const [now, setNow] = useState(new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const greeting = now.getHours() < 12 ? "Good Morning" : now.getHours() < 17 ? "Good Afternoon" : "Good Evening";
-  return { greeting, dateStr: now.toLocaleDateString("en-ZA", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) };
-}
-
 export default function AdminOverview() {
   const [adminName, setAdminName] = useState("Admin");
   const [stats, setStats] = useState<Stats>({ revenue: 0, leads: 0, orders: 0, bookings: 0, products: 0 });

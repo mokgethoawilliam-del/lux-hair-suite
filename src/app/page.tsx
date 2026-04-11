@@ -8,7 +8,6 @@ import InstallationSuite from "@/components/InstallationSuite";
 import AffiliateSection from "@/components/AffiliateSection";
 import LeadMagnet from "@/components/LeadMagnet";
 import SupportChat from "@/components/SupportChat";
-import TailoringStorefront from "@/components/TailoringStorefront";
 import { Radar, Package, Search } from "lucide-react";
 import Link from "next/link";
 import { fetchGalleryImages } from "@/lib/supabase";
@@ -24,7 +23,7 @@ export default function Home() {
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [brandName, setBrandName] = useState("");
   const [aboutUs, setAboutUs] = useState("");
-  const [businessFocus, setBusinessFocus] = useState("Hair & Beauty");
+  const [businessFocus, setBusinessFocus] = useState("Premium Weaves & Hair");
   const [siteId, setSiteId] = useState<string>("");
   const [slug, setSlug] = useState<string>("kagiso-hair-suite");
 
@@ -34,16 +33,7 @@ export default function Home() {
         const { resolveSiteId, getSiteMetadata, supabase } = await import("@/lib/supabase");
         
         // 1. Definitive Site Resolution
-        const urlParams = new URLSearchParams(window.location.search);
-        const previewSlug = urlParams.get('preview');
-        
-        let activeSiteId = await resolveSiteId();
-        
-        if (previewSlug === 'kingswear') {
-           const { data: pSite } = await supabase.from('sites').select('id').eq('subdomain_slug', 'kingswear').single();
-           if (pSite) activeSiteId = pSite.id;
-        }
-
+        const activeSiteId = await resolveSiteId();
         if (activeSiteId) {
            setSiteId(activeSiteId);
            const { data: site } = await supabase.from('sites').select('subdomain_slug').eq('id', activeSiteId).single();
@@ -69,10 +59,6 @@ export default function Home() {
     }
     load();
   }, []);
-
-  if (businessFocus === "Tailoring & Styling") {
-    return <TailoringStorefront siteId={siteId} />;
-  }
 
   return (
     <main className="min-h-screen bg-brand-obsidian text-white selection:bg-brand-gold selection:text-brand-obsidian">

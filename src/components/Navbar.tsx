@@ -10,7 +10,7 @@ export default function Navbar({ siteId, slug }: { siteId?: string, slug?: strin
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [brandName, setBrandName] = useState("");
-  const [businessFocus, setBusinessFocus] = useState("Hair & Beauty");
+  const [businessFocus, setBusinessFocus] = useState("Premium Weaves & Hair");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,7 +53,7 @@ export default function Navbar({ siteId, slug }: { siteId?: string, slug?: strin
         <div className="hidden md:flex items-center gap-10">
           {[
             "Collections", 
-            businessFocus === "Hair & Beauty" ? "Installations" : 
+            businessFocus === "Premium Weaves & Hair" ? "Installations" : 
             businessFocus === "Tailoring & Styling" ? "Bespoke" : "Events", 
             "Pro-Care", "Gallery", "About"
           ].map((item) => (
@@ -118,7 +118,7 @@ export default function Navbar({ siteId, slug }: { siteId?: string, slug?: strin
               )}
               {[
                 "Collections", 
-                businessFocus === "Hair & Beauty" ? "Installations" : 
+                businessFocus === "Premium Weaves & Hair" ? "Installations" : 
                 businessFocus === "Tailoring & Styling" ? "Bespoke" : "Events", 
                 "Pro-Care", "Gallery"
               ].map((item) => (

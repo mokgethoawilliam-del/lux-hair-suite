@@ -7,8 +7,8 @@ import { getSiteMetadata } from "@/lib/supabase";
 
 export default function Hero({ siteId }: { siteId?: string }) {
   const [content, setContent] = useState({
-    hero_headline: "Premium Hair Redefined.",
-    hero_description: "Experience the ultimate in high-performance Frontals, Ponytails, and Weaves. Professional installations for the modern woman who demands excellence."
+    hero_headline: "Premium Weaves Redefined.",
+    hero_description: "Experience the ultimate in high-performance Weaves and Professional Installations. Crafted for the woman who demands absolute excellence."
   });
   useEffect(() => {
     async function load() {

@@ -25,7 +25,7 @@ export default function AdminProfile() {
     store_name: "",
     whatsapp_number: "",
     avatar_color: "#6366f1",
-    business_focus: "Hair & Beauty",
+    business_focus: "Premium Weaves & Hair",
     custom_domain: "",
   });
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -58,7 +58,7 @@ export default function AdminProfile() {
           store_name: s.store_name || "",
           whatsapp_number: s.whatsapp_number || "",
           avatar_color: s.avatar_color || "#6366f1",
-          business_focus: s.business_focus || "Hair & Beauty",
+          business_focus: s.business_focus || "Premium Weaves & Hair",
           custom_domain: s.custom_domain || "",
         });
         setVaultData({
