@@ -22,8 +22,15 @@ export default function Navbar({ siteId, slug }: { siteId?: string, slug?: strin
       const metadata = await getSiteMetadata(siteId);
       if (metadata?.brand_name) setBrandName(metadata.brand_name);
       else if (slug) {
-         // Fallback to Slug-based brand name if metadata is missing
          setBrandName(slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
+      } else if (!siteId) {
+         // Identity resolution for the main hub when accessed via root
+         const { resolveSiteId } = await import("@/lib/supabase");
+         const resolvedId = await resolveSiteId();
+         if (resolvedId) {
+            const meta = await getSiteMetadata(resolvedId);
+            if (meta.brand_name) setBrandName(meta.brand_name);
+         }
       }
       if (metadata?.business_focus) setBusinessFocus(metadata.business_focus);
     }
