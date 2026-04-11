@@ -34,7 +34,16 @@ export default function Home() {
         const { resolveSiteId, getSiteMetadata, supabase } = await import("@/lib/supabase");
         
         // 1. Definitive Site Resolution
-        const activeSiteId = await resolveSiteId();
+        const urlParams = new URLSearchParams(window.location.search);
+        const previewSlug = urlParams.get('preview');
+        
+        let activeSiteId = await resolveSiteId();
+        
+        if (previewSlug === 'kingswear') {
+           const { data: pSite } = await supabase.from('sites').select('id').eq('subdomain_slug', 'kingswear').single();
+           if (pSite) activeSiteId = pSite.id;
+        }
+
         if (activeSiteId) {
            setSiteId(activeSiteId);
            const { data: site } = await supabase.from('sites').select('subdomain_slug').eq('id', activeSiteId).single();
