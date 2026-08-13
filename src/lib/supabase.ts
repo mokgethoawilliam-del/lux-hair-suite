@@ -354,17 +354,16 @@ export async function provisionNewSite(data: { name: string; slug: string; owner
 
   if (siteError) throw siteError;
 
-  // 2. Initialize Metadata (Premium Weaves Focus)
+  // 2. Initialize Metadata (Premium Weaves Focus) using key-value pair schema
   const { error: metaError } = await supabase
     .from("site_metadata")
-    .insert([{
-      site_id: site.id,
-      brand_name: data.name,
-      business_focus: "Premium Hair & Barbering",
-      hero_headline: `${data.name.split(' ')[0]}'s Premium Styles.`,
-      hero_description: "Expertly crafted styles, weaves, and professional grooming for the modern client.",
-      about_us: `Welcome to ${data.name}. We are dedicated to providing the highest quality hair and grooming experiences in the community.`
-    }]);
+    .insert([
+      { site_id: site.id, key: "brand_name", value: data.name },
+      { site_id: site.id, key: "business_focus", value: "Premium Hair & Barbering" },
+      { site_id: site.id, key: "hero_headline", value: `${data.name.split(' ')[0]}'s Premium Styles.` },
+      { site_id: site.id, key: "hero_description", value: "Expertly crafted styles, weaves, and professional grooming for the modern client." },
+      { site_id: site.id, key: "about_us", value: `Welcome to ${data.name}. We are dedicated to providing the highest quality hair and grooming experiences in the community.` }
+    ]);
 
   if (metaError) throw metaError;
 
