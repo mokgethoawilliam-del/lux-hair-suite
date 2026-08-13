@@ -4,19 +4,42 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import { motion } from "framer-motion";
-import { Lock, Mail, ArrowRight, Loader2 } from "lucide-react";
+import { Lock, Mail, ArrowRight, Loader2, Scissors } from "lucide-react";
 import { login } from "./actions";
+import Link from "next/link";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <button 
+    <button
       type="submit"
       disabled={pending}
-      className="w-full py-4 bg-brand-gold text-brand-obsidian font-bold rounded-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-3 shadow-lg shadow-brand-gold/20"
+      style={{
+        width: "100%",
+        padding: "16px",
+        background: pending ? "#a07a20" : "#D4AF37",
+        color: "#050505",
+        fontWeight: "700",
+        borderRadius: "16px",
+        border: "none",
+        cursor: pending ? "not-allowed" : "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "10px",
+        fontSize: "13px",
+        letterSpacing: "0.12em",
+        textTransform: "uppercase",
+        transition: "all 0.2s",
+        boxShadow: "0 8px 32px rgba(212,175,55,0.2)",
+      }}
     >
-      {pending ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Sign In <ArrowRight className="w-5 h-5" /></>}
+      {pending ? (
+        <Loader2 style={{ width: 20, height: 20, animation: "spin 1s linear infinite" }} />
+      ) : (
+        <>Sign In <ArrowRight style={{ width: 18, height: 18 }} /></>
+      )}
     </button>
   );
 }
@@ -26,66 +49,306 @@ function LoginContent() {
   const error = params?.get("error");
 
   return (
-    <div className="min-h-screen bg-brand-obsidian flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-brand-emerald/10 blur-[150px] rounded-full" />
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#050505",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "24px",
+        position: "relative",
+        overflow: "hidden",
+        fontFamily: "'Inter', sans-serif",
+      }}
+    >
+      {/* Gold glow */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: "none",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 700,
+            height: 700,
+            background: "radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%)",
+            borderRadius: "50%",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            width: 400,
+            height: 400,
+            background: "radial-gradient(circle, rgba(6,44,34,0.3) 0%, transparent 70%)",
+            borderRadius: "50%",
+            transform: "translate(30%, -30%)",
+          }}
+        />
       </div>
 
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+      {/* Grid overlay */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+          zIndex: 0,
+        }}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 w-full max-w-md bg-white/5 border border-white/5 p-12 rounded-[40px] shadow-2xl backdrop-blur-xl"
+        transition={{ duration: 0.5 }}
+        style={{
+          position: "relative",
+          zIndex: 10,
+          width: "100%",
+          maxWidth: 440,
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.07)",
+          borderRadius: 36,
+          padding: "52px 44px",
+          backdropFilter: "blur(20px)",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,175,55,0.05)",
+        }}
       >
-        <div className="text-center mb-12">
-          <div className="inline-block p-4 bg-brand-gold/10 rounded-2xl mb-6">
-            <Lock className="w-8 h-8 text-brand-gold" />
+        {/* Logo */}
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+              marginBottom: 28,
+            }}
+          >
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                background: "rgba(212,175,55,0.15)",
+                border: "1px solid rgba(212,175,55,0.25)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Scissors style={{ width: 18, height: 18, color: "#D4AF37" }} />
+            </div>
+            <span style={{ fontWeight: 700, fontSize: 15, color: "#fff" }}>
+              KasiBusiness<span style={{ color: "#D4AF37" }}> Style</span>
+            </span>
           </div>
-          <h1 className="text-3xl font-serif text-white mb-2">Admin <span className="text-brand-gold italic">Login</span></h1>
-          <p className="text-white/30 text-[10px] uppercase tracking-widest font-bold">Secure Access for Kagiso Hair Suite</p>
+
+          <div
+            style={{
+              display: "inline-flex",
+              padding: "14px",
+              background: "rgba(212,175,55,0.1)",
+              borderRadius: "50%",
+              marginBottom: 20,
+            }}
+          >
+            <Lock style={{ width: 30, height: 30, color: "#D4AF37" }} />
+          </div>
+
+          <h1
+            style={{
+              fontSize: 30,
+              fontWeight: 700,
+              color: "#fff",
+              margin: "0 0 8px",
+              fontFamily: "'Playfair Display', serif",
+            }}
+          >
+            Admin <span style={{ color: "#D4AF37", fontStyle: "italic" }}>Login</span>
+          </h1>
+          <p
+            style={{
+              color: "rgba(255,255,255,0.3)",
+              fontSize: 10,
+              textTransform: "uppercase",
+              letterSpacing: "0.2em",
+              fontWeight: 700,
+              margin: 0,
+            }}
+          >
+            Secure Access for Kagiso Hair Suite
+          </p>
         </div>
 
         {error && (
-          <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm text-center">
-            {error}
+          <div
+            style={{
+              marginBottom: 24,
+              padding: "14px 18px",
+              background: "rgba(239,68,68,0.1)",
+              border: "1px solid rgba(239,68,68,0.2)",
+              borderRadius: 12,
+              color: "#ef4444",
+              fontSize: 13,
+              textAlign: "center",
+            }}
+          >
+            {decodeURIComponent(error)}
           </div>
         )}
 
-        <form action={login} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest text-white/30 font-bold ml-1">Email Address</label>
-            <div className="relative">
-              <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-              <input 
-                type="email" 
+        <form action={login} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* Email */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <label
+              style={{
+                fontSize: 10,
+                textTransform: "uppercase",
+                letterSpacing: "0.18em",
+                color: "rgba(255,255,255,0.3)",
+                fontWeight: 700,
+                paddingLeft: 4,
+              }}
+            >
+              Email Address
+            </label>
+            <div style={{ position: "relative" }}>
+              <Mail
+                style={{
+                  position: "absolute",
+                  left: 20,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 16,
+                  height: 16,
+                  color: "rgba(255,255,255,0.2)",
+                }}
+              />
+              <input
+                type="email"
                 name="email"
                 required
-                className="w-full pl-14 pr-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-brand-gold/50 outline-none transition-all text-white"
                 placeholder="owner@kagisohair.com"
+                style={{
+                  width: "100%",
+                  paddingLeft: 50,
+                  paddingRight: 20,
+                  paddingTop: 16,
+                  paddingBottom: 16,
+                  background: "#050505",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 14,
+                  color: "#fff",
+                  fontSize: 15,
+                  outline: "none",
+                  boxSizing: "border-box",
+                  transition: "border-color 0.2s",
+                }}
+                onFocus={(e) => (e.target.style.borderColor = "rgba(212,175,55,0.5)")}
+                onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest text-white/30 font-bold ml-1">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-              <input 
-                type="password" 
+          {/* Password */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <label
+              style={{
+                fontSize: 10,
+                textTransform: "uppercase",
+                letterSpacing: "0.18em",
+                color: "rgba(255,255,255,0.3)",
+                fontWeight: 700,
+                paddingLeft: 4,
+              }}
+            >
+              Password
+            </label>
+            <div style={{ position: "relative" }}>
+              <Lock
+                style={{
+                  position: "absolute",
+                  left: 20,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 16,
+                  height: 16,
+                  color: "rgba(255,255,255,0.2)",
+                }}
+              />
+              <input
+                type="password"
                 name="password"
                 required
-                className="w-full pl-14 pr-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl focus:border-brand-gold/50 outline-none transition-all text-white"
                 placeholder="••••••••"
+                style={{
+                  width: "100%",
+                  paddingLeft: 50,
+                  paddingRight: 20,
+                  paddingTop: 16,
+                  paddingBottom: 16,
+                  background: "#050505",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 14,
+                  color: "#fff",
+                  fontSize: 15,
+                  outline: "none",
+                  boxSizing: "border-box",
+                  transition: "border-color 0.2s",
+                }}
+                onFocus={(e) => (e.target.style.borderColor = "rgba(212,175,55,0.5)")}
+                onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
               />
             </div>
           </div>
 
-          <SubmitButton />
+          <div style={{ paddingTop: 4 }}>
+            <SubmitButton />
+          </div>
         </form>
 
-        <p className="mt-12 text-center text-[10px] text-white/20 uppercase tracking-widest">
-          Authorized Access Only
-        </p>
+        <div style={{ marginTop: 28, textAlign: "center" }}>
+          <p
+            style={{
+              fontSize: 11,
+              color: "rgba(255,255,255,0.2)",
+              textTransform: "uppercase",
+              letterSpacing: "0.15em",
+            }}
+          >
+            New to KasiBusiness?{" "}
+            <Link
+              href="/signup"
+              style={{ color: "#D4AF37", textDecoration: "none", fontWeight: 700 }}
+            >
+              Create Vault
+            </Link>
+          </p>
+          <p
+            style={{
+              marginTop: 20,
+              fontSize: 9,
+              color: "rgba(255,255,255,0.12)",
+              textTransform: "uppercase",
+              letterSpacing: "0.3em",
+              fontWeight: 700,
+            }}
+          >
+            Authorized Access Only
+          </p>
+        </div>
       </motion.div>
     </div>
   );
@@ -93,7 +356,21 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-brand-obsidian flex items-center justify-center"><Loader2 className="animate-spin text-brand-gold" /></div>}>
+    <Suspense
+      fallback={
+        <div
+          style={{
+            minHeight: "100vh",
+            background: "#050505",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Loader2 style={{ color: "#D4AF37", animation: "spin 1s linear infinite" }} />
+        </div>
+      }
+    >
       <LoginContent />
     </Suspense>
   );

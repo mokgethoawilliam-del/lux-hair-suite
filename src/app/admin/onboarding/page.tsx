@@ -17,7 +17,7 @@ export default function OnboardingPage() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(({ data }: { data: any }) => {
       if (!data.user) router.push("/login");
       else setUserId(data.user.id);
     });
@@ -154,7 +154,7 @@ export default function OnboardingPage() {
                     </div>
                   </div>
                   <p className="text-[10px] text-white/20 font-bold ml-1">
-                    Your URL: <span className="text-brand-gold">{formData.slug || '...'}</span>.vercel.app
+                    Your URL: lux-hair-suite.vercel.app/<span className="text-brand-gold">{formData.slug || '...'}</span>
                   </p>
                 </div>
 
@@ -200,7 +200,7 @@ export default function OnboardingPage() {
                 <p className="text-white/40 text-sm max-w-xs mx-auto">We've linked your domain and initialized your dashboard. Welcome to the elite.</p>
               </div>
               <div className="p-4 bg-white/5 rounded-2xl border border-white/10 font-mono text-sm text-brand-gold">
-                {formData.slug}.vercel.app
+                lux-hair-suite.vercel.app/{formData.slug}
               </div>
               <p className="text-[10px] text-white/20 uppercase tracking-widest animate-pulse">Redirecting to Vault Control...</p>
             </motion.div>

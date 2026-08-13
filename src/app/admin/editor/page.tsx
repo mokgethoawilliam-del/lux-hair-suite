@@ -67,7 +67,7 @@ export default function SiteEditor() {
     if (!aiPrompt.trim()) return;
     setIsAILoading(true);
     try {
-      const qs = await askDesignerQuestions(aiPrompt, metadata.brand_name || "Lux Hair Suite");
+      const qs = await askDesignerQuestions(aiPrompt, metadata.brand_name || "KasiBusiness Style");
       setQuestions(qs);
       setAnswers(new Array(qs.length).fill(""));
       setWizardStep(2);
@@ -85,7 +85,7 @@ export default function SiteEditor() {
       const design = await generateSiteDesign({
         description: aiPrompt,
         answers,
-        currentBrand: metadata.brand_name || "Lux Hair Suite"
+        currentBrand: metadata.brand_name || "KasiBusiness Style"
       });
       setAiResult(design as Design);
       setWizardStep(3);
@@ -194,7 +194,7 @@ export default function SiteEditor() {
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] uppercase tracking-widest text-white/30 font-bold ml-1">Brand Display Name</label>
                 <div className="w-full px-6 py-4 bg-brand-obsidian border border-white/10 rounded-2xl flex items-center justify-between gap-4">
-                  <span className="text-white font-serif text-lg">{metadata.brand_name || "Lux Hair Suite"}</span>
+                  <span className="text-white font-serif text-lg">{metadata.brand_name || "KasiBusiness Style"}</span>
                   <a
                     href="/admin/profile"
                     className="text-[10px] uppercase tracking-widest text-brand-gold/60 hover:text-brand-gold font-bold transition-colors whitespace-nowrap"

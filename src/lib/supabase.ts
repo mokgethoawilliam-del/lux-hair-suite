@@ -360,10 +360,10 @@ export async function provisionNewSite(data: { name: string; slug: string; owner
     .insert([{
       site_id: site.id,
       brand_name: data.name,
-      business_focus: "Premium Weaves & Hair",
-      hero_headline: `${data.name.split(' ')[0]}'s Premium Weaves.`,
-      hero_description: "Expertly crafted weaves and professional installations for the modern woman who demands the best.",
-      about_us: `Welcome to ${data.name}. We are dedicated to providing the highest quality weaves and hair experiences in the community.`
+      business_focus: "Premium Hair & Barbering",
+      hero_headline: `${data.name.split(' ')[0]}'s Premium Styles.`,
+      hero_description: "Expertly crafted styles, weaves, and professional grooming for the modern client.",
+      about_us: `Welcome to ${data.name}. We are dedicated to providing the highest quality hair and grooming experiences in the community.`
     }]);
 
   if (metaError) throw metaError;
@@ -371,12 +371,23 @@ export async function provisionNewSite(data: { name: string; slug: string; owner
   // 3. Initialize default app settings
   await supabase.from("app_settings").insert([
     { site_id: site.id, key: "store_name", value: data.name },
-    { site_id: site.id, key: "business_focus", value: "Premium Weaves & Hair" },
+    { site_id: site.id, key: "business_focus", value: "Premium Hair & Barbering" },
     { site_id: site.id, key: "store_currency", value: "ZAR" }
   ]);
 
   return site;
 }
+
+
+export async function createDeliveryZone(name: string, fee: number, siteId?: string) {
+  const activeSiteId = siteId || await getAdminSite();
+  if (!activeSiteId) throw new Error("Could not resolve Site Identity.");
+
+  const { data, error } = await supabase
+    .from("delivery_zones")
+    .insert([{ site_id: activeSiteId, name, fee }])
+    .select()
+    .single();
 
   if (error) throw error;
   return data;

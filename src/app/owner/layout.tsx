@@ -66,7 +66,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
               Owner <span className="text-purple-400 italic">Portal</span>
             </h1>
             <p className="text-[10px] uppercase tracking-[0.3em] text-white/30 font-bold">
-              Lux Hair Suite · SaaS Control Centre
+              KasiBusiness Style · SaaS Control Centre
             </p>
           </div>
 

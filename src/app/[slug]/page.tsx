@@ -131,7 +131,7 @@ export default function DynamicLandingPage({ params }: { params: Promise<{ slug:
                             Lost your receipt? Track your live installations, product orders, and bespoke bookings instantly across our network.
                          </p>
                          <Link 
-                           href={`/s/${slug}/track`}
+                           href={`/${slug}/track`}
                            className="inline-flex items-center gap-3 px-8 py-4 bg-brand-gold text-brand-obsidian font-bold rounded-2xl hover:scale-105 transition-all shadow-xl shadow-brand-gold/20 uppercase tracking-widest text-xs"
                          >
                             <Search className="w-4 h-4" />
